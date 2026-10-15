@@ -1,0 +1,32 @@
+/* SPECIAL: FONT FROM RBBT.NET USED ON THIS MESSAGE BOARD */
+@font-face {
+  font-family: "seven";
+  src: url("../font/7segment.ttf") format("truetype"),
+    /* Safari, Android, iOS */ url("../font/7segment.woff") format("woff"); /* Modern Browsers */
+}
+
+// Colors
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+$success-color: #28a745;
+$danger-color: #dc3545;
+$warning-color: #ffc107;
+$info-color: #17a2b8;
+
+// Fonts
+$font-family: Arial, sans-serif;
+$font-size-base: 16px;
+$line-height-base: 1.5;
+
+// Spacing
+$spacing-unit: 1rem;
+$padding-base-vertical: $spacing-unit;
+$padding-base-horizontal: $spacing-unit * 1.5;
+$margin-base-vertical: $spacing-unit;
+$margin-base-horizontal: $spacing-unit * 1.5;
+
+// Breakpoints
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;

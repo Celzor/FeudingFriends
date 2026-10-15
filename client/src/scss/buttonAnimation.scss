@@ -1,0 +1,224 @@
+/**************************************************************************************
+Random Button Animation
+***************************************************************************************/
+
+.boring {
+    perspective: 1000px;
+    transition: transform 1s;
+    background-color: #09ff00 !important;
+  }
+  
+  .boring.clicked {
+    transform: rotateY(180deg) scale(1.2); 
+    background-color: #09ff00 !important;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(2turn);
+      background-color: #09ff00 !important;
+    }
+  }
+  
+
+  
+  .animate-spin {
+    animation: spin 1s;
+    background-color: #09ff00 !important;
+  }
+  
+ 
+  
+  .green-wipe {
+    position: relative;
+    background: #fff;
+    overflow: hidden;
+  }
+  
+  .green-wipe::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #09ff00 !important;
+    transform: translateX(-100%);
+    animation: fill 2s forwards;
+  }
+  
+  @keyframes fill {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  
+  .green-wipe.clicked::after {
+    animation-name: fill;
+    animation-fill-mode: forwards;
+  }
+
+
+
+
+
+
+.rainbow-1{
+   background-image: linear-gradient(90deg, #008000 0%, #ADFF2F 49%, #006400 80%, #008000 100%);
+   animation:slidebg-up  1.5s linear infinite;
+}
+
+.rainbow-2{
+  background-image: linear-gradient(to right, #006400, #008000, #228B22, #7CFC00, #ADFF2F, #32CD32, #90EE90, #006400);
+  animation:slidebg-left  1.5s linear infinite;
+}
+
+.rainbow-3{
+  background-image: linear-gradient(to right, #006400, #008000, #228B22, #7CFC00, #ADFF2F, #32CD32, #90EE90, #006400);
+  animation:slidebg-right  1.5s linear infinite;
+}
+
+.rainbow-4{
+   background-image: linear-gradient(
+      to right, 
+      #006400,
+      #008000, 
+      #228B22,
+      #7CFC00,
+      #ADFF2F,
+      #32CD32,
+      #90EE90
+    );
+  animation:slidebg-down 1.5s linear infinite;
+}
+
+.rainbow-5{
+   background-image: linear-gradient(
+      to right, 
+      #006400,
+      #006400 16.65%,
+      #008000 16.65%,
+      #008000 33.3%,
+      #228B22 33.3%,
+      #228B22 49.95%,
+      #7CFC00 49.95%,
+      #7CFC00 66.6%,
+      #ADFF2F 66.6%,
+      #ADFF2F 83.25%,
+      #32CD32 83.25%,
+      #32CD32 100%,
+      #90EE90 100%
+    );
+  animation:slidebg-right 1.5s linear infinite;
+}
+
+@keyframes slidebg-right {
+  to {
+    background-position: 40vw;
+  }
+}
+
+@keyframes slidebg-left {
+  to {
+    background-position: -40vw;
+  }
+}
+
+@keyframes slidebg-up {
+  to {
+    background-position: 0 -40vh;
+  }
+}
+
+@keyframes slidebg-down {
+  to {
+    background-position: 0 40vh;
+  }
+}
+$green: #00ff00; // Define your green color here
+
+@keyframes slidebg-right {
+  to {
+    background-color: $green;
+    background-position: 40vw;
+  }
+}
+
+@keyframes slidebg-left {
+  to {
+    background-color: $green;
+    background-position: -40vw;
+  }
+}
+
+@keyframes slidebg-up {
+  to {
+    background-color: $green;
+    background-position: 0 -40vh;
+  }
+}
+
+@keyframes slidebg-down {
+  to {
+    background-color: $green;
+    background-position: 0 40vh;
+  }
+}
+
+// Define animations
+@keyframes fill {
+  to {
+    box-shadow: inset 0 0 0 2em $green;
+  }
+}
+
+@keyframes pulse {
+  to {
+    box-shadow: 0 0 0 2em $green;
+  }
+}
+
+@keyframes close {
+  to {
+    box-shadow: 
+      inset -15.5em 0 0 0 $green,
+      inset 15.5em 0 0 0 $green;  
+  }
+}
+
+@keyframes raise {
+  to {
+    box-shadow: 0 0.8em 0.8em -0.4em $green;
+    transform: translateY(-0.4em);
+  }
+}
+
+@keyframes up {
+  to {
+    box-shadow: inset 0 -3.25em 0 0 $green;
+  }
+}
+
+// Apply animations on click
+.fill {
+  animation: fill 1.5s;
+}
+
+.pulse {
+  animation: pulse 1.5s;
+}
+
+.close {
+  animation: close 1.5s;
+}
+
+.raise {
+  animation: raise 1.5s;
+}
+
+.up {
+  animation: up 1.5s;
+}

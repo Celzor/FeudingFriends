@@ -1,0 +1,149 @@
+// import varaibesl
+@import "./variables.scss";
+
+/**************************************************************************************
+Lobby Config
+***************************************************************************************/
+
+input {
+  font-size: 24px;
+  text-align: center;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 5px;
+  line-height: 0.5;
+}
+
+select {
+  font-size: 24px;
+  text-align-last: center;
+  border: 2px solid black;
+  border-radius: 5px;
+  padding: 5px;
+  line-height: 0.5;
+}
+
+// game id + copy ID
+.lineHeightReduce {
+  line-height: 0.5;
+
+  // WHO HOST PLZ?
+  .hostDetails {
+    color: yellow;
+    animation: fadeInOut 2s linear infinite;
+    font-size: 1.5em;
+  }
+}
+
+// contains config and players allocation
+.lobbyTopContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  // config
+  .lobbyMain {
+    display: flex;
+    flex-grow: 0;
+    flex-direction: column;
+
+    background-color: #666464;
+    color: white;
+    border: 2px solid black;
+    border-radius: 10px;
+    padding: 0px 100px 30px 100px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    margin: 10px;
+    text-align: center;
+
+    // inner config container
+    .lobbyConfig {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+
+      .questionSet {
+        width: 200px;
+        text-align: center;
+        border: 2px solid black;
+        border-radius: 5px;
+        line-height: 0.5;
+      }
+
+      .questionPools {
+        width: 100px;
+        height: 200px;
+        font-size: 20px;
+        border: 2px solid black;
+        border-radius: 5px;
+        padding-bottom: 30px;
+        line-height: 0.5;
+      }
+
+      .winConditions {
+        width: 60%;
+        text-align: center;
+        border: 2px solid black;
+        border-radius: 5px;
+        padding-bottom: 30px;
+        line-height: 0.5;
+      }
+    }
+  }
+
+  .PlayersInLobby {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+
+    background-color: #420420;
+    color: white;
+    border: 2px solid black;
+    border-radius: 10px;
+    padding: 0px 100px 30px 100px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    margin: 10px;
+    text-align: center;
+
+    .PlayersInLobbyInner {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      width: 100%;
+
+      ul {
+        display: flex;
+        // flex: 1;
+        flex-direction: column;
+        list-style-type: none;
+        padding: 0;
+        width: 100%;
+
+        .PlayersInLobbyRow {
+          display: flex;
+          // width: 100%;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid black;
+          border-collapse: collapse;
+          padding: 5px;
+          line-height: 0.8;
+        }
+
+        .PlayersInLobbyRow:not(:last-child) {
+          border-bottom: 1px solid black;
+        }
+
+        .PlayersInLobbyRow:nth-child(even) {
+          background-color: #666464;
+        }
+      }
+    }
+  }
+}
+
+.teamsBottomLobbyContainer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
