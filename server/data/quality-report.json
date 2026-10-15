@@ -1,0 +1,85 @@
+{
+  "review_date": "2026-10-15",
+  "sources": {
+    "workbook": {
+      "name": "Family Feud Question Database.xlsx",
+      "sha256": "1e7b61c128f97ac8e4eafe855b1a55e2c3009ac6e8fe2798fa3f89cdca77c09f",
+      "exported_at": null,
+      "worksheets": {
+        "3 Answers": 90,
+        "4 Answers": 979,
+        "5 Answers": 1048,
+        "6 Answers": 1063,
+        "7 Answers": 739,
+        "No Points 3": 181,
+        "Sheet1": 20,
+        "No Points 4": 359,
+        "No Points 5": 763,
+        "No Points 6": 277,
+        "No Points 7": 271
+      }
+    },
+    "classpoint_pdf": {
+      "name": "Family-Feud-Questions-and-Answers-PDF-by-ClassPoint.pdf",
+      "sha256": "ff055c042a49ca8fddb19c1c4abb54efc95ed14419e9e286ee23de5734328762",
+      "numbered_questions": 131
+    }
+  },
+  "excluded_fast_money_worksheets": {
+    "Fast Money": 803,
+    "Broken Fast Money": 794
+  },
+  "counts": {
+    "input_questions": 5921,
+    "question_labels_corrected": 3427,
+    "answer_labels_corrected": 691,
+    "incomplete_questions_removed": 7,
+    "blank_answers_removed": 2,
+    "boards_reclassified_by_answer_count": 9,
+    "duplicate_answers_removed": 7,
+    "score_format_repairs": 1,
+    "duplicate_questions_removed": 333,
+    "output_questions": 5581
+  },
+  "pool_counts": {
+    "0": 658,
+    "1": 323,
+    "2": 683,
+    "3": 88,
+    "4": 968,
+    "5": 1049,
+    "6": 1082,
+    "7": 722,
+    "8": 8
+  },
+  "excluded": [
+    {
+      "question": "Name A Winter Sport That You Think Never Add To Olympics",
+      "reason": "The truncated question asks about sports not in the Olympics, but its answers are already Olympic events; the intended question is unknown."
+    },
+    {
+      "question": "Name Something That Doesn't Have A Characteristic Of President",
+      "reason": "The question is garbled and its intended meaning cannot be established from the supplied answers."
+    },
+    {
+      "question": "Other Than School, Name A Place Where You Find",
+      "reason": "The subject is missing; the original question is incomplete."
+    },
+    {
+      "question": "Name A Place Where Only A Person With No Conscience Would",
+      "reason": "The action is missing; completing it would require guessing."
+    },
+    {
+      "question": "Name Something People Do During Flu Season To Avoid Getting Sick",
+      "reason": "The source contains an unknown answer (??); the full board cannot be reconstructed reliably."
+    },
+    {
+      "question": "Name Something That would Keep You From Sleeping On An Airplane",
+      "reason": "The source contains an unknown answer (??); the full board cannot be reconstructed reliably."
+    },
+    {
+      "question": "Name Something You See In A Room That Tells You A Teenage Girl Lives There.",
+      "reason": "The source gives Clothes a score of 121, outside a 100-response survey; the correct score is unknown."
+    }
+  ]
+}

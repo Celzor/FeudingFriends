@@ -1,6 +1,5 @@
-import React, { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext, useState, useRef } from "react";
 
-import { useSearchParams } from "react-router-dom";
 
 import { DataContext } from "../providers/DataProvider";
 
@@ -11,22 +10,17 @@ export default function MainScreen() {
   const { playerName, setPlayerName, createNewLobby, joinGameLobby } =
     useContext(DataContext);
 
-  let [searchParams, setSearchParams] = useSearchParams();
-
+  const joinedFromLink = useRef(false);
   useEffect(() => {
-    const gameCode = searchParams.get("__game_code");
+    if (joinedFromLink.current) return;
+    joinedFromLink.current = true;
+    const url = new URL(window.location.href);
+    const gameCode = url.searchParams.get("__game_code");
     if (gameCode) {
-      // Set the variable here
-      // For example:
       setGameLobbyCodeInput(gameCode);
-
-      // clear search parms
-      setSearchParams([]);
-
-      // if playername is not null, join us
-      if (playerName != "") {
-        joinGameLobby(gameCode);
-      }
+      url.searchParams.delete("__game_code");
+      history.replaceState(null, "", url);
+      if (playerName) void joinGameLobby(gameCode);
     }
   }, []);
 
@@ -42,6 +36,9 @@ export default function MainScreen() {
         value={playerName}
         onChange={(e) => setPlayerName(e.target.value)}
         placeholder="Enter your player name"
+        aria-label="Player name"
+        maxLength={40}
+        autoComplete="nickname"
       />
       <br />
 
@@ -66,6 +63,9 @@ export default function MainScreen() {
         className="playerInput"
         type="text"
         placeholder="Enter Lobby Code"
+        aria-label="Lobby code"
+        inputMode="numeric"
+        maxLength={6}
         value={gameLobbyCodeInput}
         onChange={(e) => setGameLobbyCodeInput(e.target.value)}
       />

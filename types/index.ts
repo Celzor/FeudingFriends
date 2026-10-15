@@ -13,6 +13,7 @@ export type ILobbyConfig = {
 export type IGameState =
   | "lobby"
   | "lightning_round_set_question"
+  | "lightning_reveal"
   | "lightning_round"
   | "host_set_question"
   | "round"
@@ -30,6 +31,12 @@ export type IRoundResults = {
 };
 
 export type ILobbyData = {
+  revision?: number;
+  lightningChallenge?: {
+    mode: "chase" | "moles" | "reaction";
+    seed: number;
+    startedAt: number;
+  };
   lobbyCode: string;
   hostName: string;
   hostSocketId: string;
@@ -84,7 +91,8 @@ export type IQuestionType = {
 // ---------
 // message types
 
-export type IMessageTypes = "error" | "lobby_update" | "question_check";
+export type IMessageTypes =
+  "error" | "lobby_update" | "question_check" | "pong" | "left_lobby";
 
 export type IMessage = {
   type: IMessageTypes;

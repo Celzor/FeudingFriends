@@ -1,3 +1,5 @@
+@use "sass:math";
+@use "sass:color";
 @keyframes reveal {
   0% {
     opacity: 0;
@@ -119,11 +121,11 @@ $box-shadow: ();
 $box-shadow2: ();
 @for $i from 0 through $particles {
   $box-shadow: $box-shadow,
-    calc(random($width) - $width / 2) +
+    calc(math.random($width) - math.div($width, 2)) +
       px
-      calc(random($height) - $height / 1.2) +
+      calc(math.random($height) - math.div($height, 1.2)) +
       px
-      hsl(random(360), 100%, 50%);
+      hsl(math.random(360), 100%, 50%);
   $box-shadow2: $box-shadow2, 0 0 #fff;
 }
 @mixin keyframes($animationName) {

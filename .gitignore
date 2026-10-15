@@ -1,0 +1,13 @@
+node_modules/
+client/dist/
+server/dist/
+client/public/questions.json
+client/output/
+client/test-results/
+client/playwright-report/
+.env
+.env.*
+!.env.example
+*.log
+
+__pycache__/

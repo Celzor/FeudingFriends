@@ -1,39 +1,6 @@
-
-networks:
-  traefik-net:
-    external: true
-
+# Copy to docker-compose.override.yml and substitute your public HTTPS origins.
 services:
   app:
-    networks:
-      - traefik-net
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
-
-      - "traefik.http.services.feuder.loadbalancer.server.port=3010"
-
-      - "traefik.http.routers.feuder.rule=Host(`feuder.tgxn.local`)"
-      - "traefik.http.routers.feuder.entrypoints=http"
-
-      - "traefik.http.routers.feuder_https.rule=Host(`feuder.tgxn.local`)"
-      - "traefik.http.routers.feuder_https.entrypoints=https"
-      - "traefik.http.routers.feuder_https.tls.certResolver=tgxn_local"
-
-      - "traefik.http.routers.feuder_http_redirect.rule=Host(`feuder.tgxn.local`)"
-      - "traefik.http.routers.feuder_http_redirect.entrypoints=http"
-      - "traefik.http.routers.feuder_http_redirect.middlewares=redirect_https@file"
-  
-  # phpmyadmin:
-  #   image: lscr.io/linuxserver/phpmyadmin:latest
-  #   restart: always
-  #   expose:
-  #     - "40001"
-  #   ports:
-  #     - "40001:80"
-  #   environment:
-  #     - PMA_HOST=mariadb
-  #     - PMA_PORT=3306
-  #   networks:
-  #     - traefik-net
-  #     - pushme-net
+    environment:
+      PUBLIC_ORIGIN: https://feud.example.com
+      REFRACT_FRAME_ANCESTORS: "'self' https://chat.example.com"

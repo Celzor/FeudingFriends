@@ -23,18 +23,11 @@ export default function GameEnds() {
 
   const { playGameOver } = useGameSounds();
 
-  playGameOver();
+  useEffect(() => { playGameOver(); }, []);
 
   const GameEndText = useMemo(() => {
-    let highestScore = Number.MIN_VALUE;
-    let winningTeam = null;
-
-    for (let team of lobbyData.teams) {
-      if (team.teamScore > highestScore) {
-        highestScore = team.teamScore;
-        winningTeam = String(team.teamName);
-      }
-    }
+    const highestScore = Math.max(...lobbyData.teams.map(team => team.teamScore));
+    const winningTeam = lobbyData.teams.filter(team => team.teamScore === highestScore).map(team => team.teamName).join(" & ");
 
     const sortedTeams = [...lobbyData.teams].sort(
       (a, b) => b.teamScore - a.teamScore
@@ -50,8 +43,7 @@ export default function GameEnds() {
         <div className="winner-revel3">{winningTeam} </div>
 
         <div className="mainTeamContainer">
-          {lobbyData.teams
-            .sort((a, b) => b.teamScore - a.teamScore)
+          {sortedTeams
             .map((team: ITeamData, index: number) => {
               let isCurrentTeam = false;
 
@@ -71,8 +63,7 @@ export default function GameEnds() {
                   <div className="team-table">
                     <strong>Final Score: </strong>
                     <strong className="finalScoreBoard">
-                      {team.teamScore &&
-                        team.teamScore.toString().padStart(4, "0")}
+                      {team.teamScore.toString().padStart(4, "0")}
                     </strong>
 
                     <ul className="player-table">

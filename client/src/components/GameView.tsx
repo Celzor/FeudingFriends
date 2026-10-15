@@ -6,6 +6,7 @@ import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { IAnswerType, IQuestionType } from "../../../types";
 
 import RenderQuestion from "../components/RenderQuestion";
+import Countdown from "./Countdown";
 import RenderLightningQuestion from "../components/RenderLightningQuestion";
 import RoundEndStats from "../components/RoundEndStats";
 import GameEnds from "../components/GameEnds";
@@ -58,7 +59,7 @@ function QuestionConfirm({ lightning = false }: { lightning?: boolean }) {
     setConfirmingQuestion(question);
   };
 
-  if (!confirmingQuestion) return <div>Loading...</div>;
+  if (!confirmingQuestion) return <div>Loading question… <button onClick={onCancel}>Try again</button></div>;
 
   return (
     <div>
@@ -114,7 +115,7 @@ export default function GameView() {
     }
   }
 
-  if (lobbyData.gameState === "lightning_round") {
+  if (lobbyData.gameState === "lightning_round" || lobbyData.gameState === "lightning_reveal") {
     return (
       <div>
         <h1>Lightning Round</h1>
@@ -146,10 +147,9 @@ export default function GameView() {
       <div className="mainGameQuestion">
         <h1>
           Round {lobbyData.currentRound + 1}
-          {roundSecondsLeft
-            ? `- ${(roundSecondsLeft / 1000).toFixed(3)} s`
-            : null}
+
         </h1>
+        <Countdown />
         <h3 className="currentTeamGuessing">{gameStatusText}</h3>
 
         <div className="renderQuestion">

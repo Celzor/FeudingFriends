@@ -2,6 +2,7 @@ import React, { useEffect, useContext, useState } from "react";
 
 import { DataContext } from "../providers/DataProvider";
 
+import { isRefract } from "../socket";
 import MainScreen from "../screens/MainScreen";
 import LobbyScreen from "../screens/LobbyScreen";
 import GameScreen from "../screens/GameScreen";
@@ -14,15 +15,12 @@ export default function Game() {
   }
 
   if (!lobbyData) {
-    // who the fuck hasn't even joined a fucking lobby yet?
-    return <MainScreen />;
+    return isRefract ? <p>Synchronizing the activity…</p> : <MainScreen />;
   }
 
-  // in an actual fucking game
   if (lobbyData.gameState !== "lobby") {
     return <GameScreen />;
   }
 
-  // fucking losers are only in the lobby
   return <LobbyScreen />;
 }

@@ -1,9 +1,7 @@
-import React, { createContext, useEffect, useState } from "react";
-
-import { socket } from "../socket";
+import React, { createContext, useEffect, useRef, useState } from "react";
+import { socket, isRefract } from "../socket";
 import usePreviousState from "../hooks/usePreviousState";
-
-import {
+import type {
   IAnswerType,
   ILobbyData,
   ILobbyConfig,
@@ -11,698 +9,254 @@ import {
   IQuestionType,
   ITeamData,
 } from "../../../types";
-
-const DataContext = createContext<IDataProviderContext>(null);
-
-type ISocketResponse = {
-  type: string;
-  message: string;
-  data?: any;
+const savedName = () => {
+  try {
+    return localStorage.getItem("playerName") || "";
+  } catch {
+    return "";
+  }
 };
 
-// game state provider
-const DataContextProvider = ({ children }) => {
-  // socket state
-  const [socketConnected, _setSocketConnected] = useState(false);
+const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
+  const [socketConnected, setSocketConnected] = useState(socket.connected);
+  const [playerName, setName] = useState(savedName);
+  const [lobbyData, setLobbyData, prevLobbyData] =
+    usePreviousState<ILobbyData | null>(null);
+  const [error, setError] = useState("");
+  const [timeOffset, setTimeOffset] = useState(0);
+  const [roundSecondsLeft, setRoundSecondsLeft] = useState<number | null>(null);
+  const latestLobby = useRef(lobbyData);
+  latestLobby.current = lobbyData;
+  const isLobbyHost = Boolean(
+    lobbyData && lobbyData.hostSocketId === socket.id,
+  );
+  const teamsData = lobbyData?.teams || [];
+  const accept = (response: any) => {
+    if (response?.type === "error")
+      throw new Error(
+        response.message || "That action could not be completed.",
+      );
+    if (response?.data?.lobby) setLobbyData(response.data.lobby);
+    return response;
+  };
+  async function request(type: string, data: Record<string, unknown> = {}) {
+    setError("");
+    return accept(
+      await socket
+        .timeout(10000)
+        .emitWithAck("message", {
+          type,
+          data: { lobbyCode: latestLobby.current?.lobbyCode, ...data },
+        }),
+    );
+  }
+  const action = async (type: string, data: Record<string, unknown> = {}) => {
+    try {
+      await request(type, data);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Connection failed. Please try again.",
+      );
+    }
+  };
   useEffect(() => {
-    function onConnect() {
-      _setSocketConnected(true);
-    }
-
-    function onDisconnect() {
-      _setSocketConnected(false);
-    }
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-
+    const connect = () => {
+      setSocketConnected(true);
+      const start = Date.now();
+      socket
+        .timeout(5000)
+        .emitWithAck("message", { type: "ping" })
+        .then((r) => setTimeOffset(r.data.time - (start + Date.now()) / 2))
+        .catch(() => {});
+      if (latestLobby.current && !isRefract)
+        request("sync_lobby").catch((e) => {
+          setError(`${e.message} Please rejoin the game.`);
+          setLobbyData(null);
+        });
+    };
+    const disconnect = () => setSocketConnected(false);
+    const reset = (name: string) => {
+      setLobbyData(null);
+      setName(name);
+      setError("");
+    };
+    const message = (response: any) => {
+      try {
+        accept(response);
+      } catch (e) {
+        setError(e.message);
+      }
+    };
+    const failure = (e: Error) => setError(e.message || "Could not connect.");
+    socket.on("connect", connect);
+    socket.on("disconnect", disconnect);
+    socket.on("message", message);
+    socket.on("reset", reset);
+    socket.on("error", failure);
+    socket.on("connect_error", failure);
+    if (socket.connected) connect();
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
+      socket.off("connect", connect);
+      socket.off("disconnect", disconnect);
+      socket.off("message", message);
+      socket.off("reset", reset);
+      socket.off("error", failure);
+      socket.off("connect_error", failure);
     };
   }, []);
+  useEffect(() => {
+    const active =
+      lobbyData?.gameState === "round" ||
+      (lobbyData?.gameState === "lightning_round" &&
+        lobbyData.lightningRoundTeamIndex !== undefined);
+    if (!active || !lobbyData?.timerStart || !lobbyData.config.timerSeconds) {
+      setRoundSecondsLeft(null);
+      return;
+    }
+    const tick = () =>
+      setRoundSecondsLeft(
+        Math.max(
+          0,
+          lobbyData.timerStart +
+            lobbyData.config.timerSeconds * 1000 -
+            Date.now() -
+            timeOffset,
+        ),
+      );
+    tick();
+    const interval = setInterval(tick, 100);
+    return () => clearInterval(interval);
+  }, [
+    lobbyData?.gameState,
+    lobbyData?.timerStart,
+    lobbyData?.config.timerSeconds,
+    lobbyData?.lightningRoundTeamIndex,
+    timeOffset,
+  ]);
 
-  ///// ------------------------------- the state is this
-
-  // trry to load from localstorage
-  let name = "";
-  if (localStorage.playerName) name = localStorage.playerName;
-
-  // user state
-  const [playerName, _setPlayerName] = useState(name);
   const setPlayerName = async (name: string) => {
-    localStorage.setItem("playerName", name);
-
-    _setPlayerName(name);
-  };
-
-  // lobby state
-  const [isInLobby, _setIsInLobby] = useState(false);
-  const [isLobbyHost, _setIsLobbyHost] = useState(false);
-  const [lobbyData, _setLobbyData, prevLobbyData] = usePreviousState(null);
-  // const [prevLobbyData, _setPrevLobbyData] = useState<ILobbyData | null>(null);
-
-  // TEAMS DATA
-  const [teamsData, _setTeamsData] = useState<ITeamData[]>([]);
-
-  // current round
-  // const [currentRound, _setCurrentRound] = useState<number>(null);
-
-  // current team playing
-  // const [currentTeam, _setCurrentTeam] = useState<number>(null);
-
-  // in game
-  const [isInGame, _setIsInGame] = useState(false);
-  // const [currentQuestion, _setCurrentQuestion] = useState<IQuestionType>(null);
-
-  ///// -------------------------------
-
-  const [timeOffset, _setTimeOffset] = useState<number | false>(false);
-
-  // once the socket is connected, sync time
-  useEffect(() => {
-    function calcOffset(serverTime: number) {
-      const localTime = Date.now();
-      const offset = serverTime - localTime;
-      console.log("time offset", offset, "ms");
-      _setTimeOffset(offset);
-    }
-
-    if (socketConnected && !timeOffset) {
-      sendSocketWait("ping", null).then((response) => {
-        calcOffset(response.data.time);
-      });
-    }
-  }, [socketConnected]);
-
-  // tick every 500ms
-  const [com, setCom] = useState(0);
-  useEffect(() => {
-    const comInterval = setInterval(() => {
-      if (roundSecondsLeft > 0) {
-        console.log("com", Date.now());
-        setCom(Date.now());
-      }
-    }, 10);
-    return () => clearInterval(comInterval);
-  }, []);
-
-  const [roundSecondsLeft, setRoundSecondsLeft] = useState(null);
-
-  useEffect(() => {
-    if (!lobbyData) return;
-
-    // if we are in a round
-    if (lobbyData.gameState !== "round") {
-      return;
-    }
-
-    if (lobbyData.config.timerSeconds === 0) {
-      return;
-    }
-
-    if (lobbyData.timerStart && lobbyData.timerStart === 0) {
-      return;
-    }
-
-    const timeLeft =
-      lobbyData.timerStart +
-      lobbyData.config.timerSeconds * 1000 -
-      new Date().getTime();
-
-    if (timeLeft < 0 && roundSecondsLeft !== 0) {
-      setRoundSecondsLeft(0);
-
-      // if they are the host, mark questions wrong
-      if (isLobbyHost) {
-        // answerQuestion(false);
-        triggerTimerFailure();
-      }
-
-      return;
-    }
-
-    setRoundSecondsLeft(timeLeft);
-    return;
-  }, [com, lobbyData]);
-
-  // listen for incoming messages
-  useEffect(() => {
-    function onMessage(value) {
-      console.log("onMessage", value);
-
-      switch (value.type) {
-        case "time_update":
-          // console.log("time_update", value.data);
-          break;
-
-        // these are meant for game state updates
-        case "lobby_update":
-          onLobbyPlayersUpdate(value.data.lobby);
-          break;
-
-        // // this is a for client animations and audio etc (syncc)
-        // case "client_action":
-        //   // console.error("client_action", value.data);
-        //   onClientAction(value.data);
-        //   break;
-
-        default:
-          console.error("UNHANDLED onMessage", value);
-      }
-    }
-
-    socket.on("message", onMessage);
-
-    return () => {
-      socket.off("message", onMessage);
-    };
-  }, []);
-
-  /*  const onClientAction = (data: any) => {
-    console.error("onClientAction", data);
-  };
- */
-  const onLobbyPlayersUpdate = (lobby) => {
-    console.log("onLobbyPlayersUpdate", lobby);
-
-    // _setPrevLobbyData(lobbyData);
-
-    _setLobbyData(lobby);
-
-    //const newPlayers = lobby.players;
-
-    // add the player to the player list
-    //const newPlayers = [...lobbyPlayers, newPlayers];
-
-    // update the player list
-    // _setLobbyPlayers(lobby.players);
-    _setTeamsData(lobby.teams);
-  };
-
-  ///// ------------------------------- functions
-
-  // wrapper for sending and waiting
-  const sendSocketWait = async (
-    type: string,
-    data: any = null
-  ): Promise<ISocketResponse> => {
-    const responseData: ISocketResponse = await socket
-      .timeout(5000)
-      .emitWithAck("message", {
-        type: type,
-        data,
-      });
-
-    if (responseData.type === "error") {
-      throw new Error(responseData.message);
-    }
-
-    return responseData;
-  };
-
-  const createNewLobby = async () => {
+    setName(name);
     try {
-      const responseData: ISocketResponse = await sendSocketWait(
-        "create_lobby",
-        {
-          playerName,
-        }
-      );
-      _setIsLobbyHost(true);
-      _setIsInLobby(true);
-
-      const lobby: ILobbyData = responseData.data.lobby;
-
-      // _setPrevLobbyData(lobby);
-      _setLobbyData(lobby);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("createNewLobby error", err);
-      alert("Error creating lobby");
-    }
+      localStorage.setItem("playerName", name);
+    } catch {}
   };
-
-  // attempt to find game lobby and join it
-  const MOCK_fakeJoinLobby = async (lobbyCode: string) => {
-    try {
-      const response: ISocketResponse = await sendSocketWait("join_lobby", {
-        playerName: lobbyData.hostName + Math.random(),
-        lobbyCode,
-        fakeUser: true,
-      });
-      // _setIsLobbyHost(false);
-      // _setIsInLobby(true);
-
-      const responseLobby: ILobbyData = response.data.lobby;
-      // console.log("joinGameLobby response", responseLobby);
-
-      _setLobbyData(responseLobby);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("joinGameLobby error", err);
-      alert("Error joining lobby");
-    }
-  };
-
-  // attempt to find game lobby and join it
-  const joinGameLobby = async (lobbyCode: string) => {
-    try {
-      const response: ISocketResponse = await sendSocketWait("join_lobby", {
-        playerName,
-        lobbyCode,
-      });
-      _setIsLobbyHost(false);
-      _setIsInLobby(true);
-
-      const responseLobby: ILobbyData = response.data.lobby;
-      console.log("joinGameLobby response", responseLobby);
-
-      _setLobbyData(responseLobby);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-
-      console.error("joinGameLobby error", err);
-      alert("Error joining lobby");
-    }
-  };
-
-  const hostGetQuestion = async (isLightningQuestion?: boolean) => {
-    try {
-      const response: ISocketResponse = await sendSocketWait("get_question", {
-        lobbyCode: lobbyData.lobbyCode,
-        isLightningQuestion,
-      });
-
-      const responseQuestion: IQuestionType = response.data.question;
-      console.log("hostGetQuestion response", responseQuestion);
-      // _setConfirmQuestion(responseQuestion);
-      return responseQuestion;
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("hostGetQuestion error", err);
-      alert("Error getting question");
-    }
-  };
-
-  const startGame = async () => {
-    try {
-      const response: ISocketResponse = await sendSocketWait("start_game", {
-        lobbyCode: lobbyData.lobbyCode,
-      });
-
-      const resp: ILobbyData = response.data.lobby;
-      _setLobbyData(resp);
-
-      console.log("Starting game...", response);
-
-      // advance to the first round
-
-      // _setCurrentRound(0);
-      // _setCurrentTeam(0);
-
-      // _setCurrentQuestion(response.data.question);
-
-      // advanceRound();
-
-      _setIsInGame(true);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("startGame error", err);
-      alert("Error starting game");
-    }
-  };
-
-  const triggerTimerFailure = async () => {
-    try {
-      const response: ISocketResponse = await sendSocketWait(
-        "time_out_round_steal_trigger_end_whole_existance",
-        {
-          lobbyCode: lobbyData.lobbyCode,
-        }
-      );
-
-      const resp: ILobbyData = response.data.lobby;
-      _setLobbyData(resp);
-
-      console.log("triggerTimerFailure", response);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("triggerTimerFailure error", err);
-      alert("Error triggerTimerFailure game");
-    }
-  };
-
-  const startTheLightningBuzzer = async () => {
-    try {
-      const response: ISocketResponse = await sendSocketWait(
-        "begin_lightning_buzzer",
-        {
-          lobbyCode: lobbyData.lobbyCode,
-        }
-      );
-
-      const resp: ILobbyData = response.data.lobby;
-      _setLobbyData(resp);
-
-      console.log("Starting startTheLightningBuzzer...", response);
-
-      _setIsInGame(true);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("startTheLightningBuzzer error", err);
-      alert("Error starting game");
-    }
-  };
-
-  const hostEndRound = async () => {
-    try {
-      const response: ISocketResponse = await sendSocketWait("end_round", {
-        lobbyCode: lobbyData.lobbyCode,
-      });
-
-      const resp: ILobbyData = response.data.lobby;
-
-      _setLobbyData(resp);
-
-      console.log("hostEndRound game...", response);
-
-      // advance to the first round
-
-      // _setCurrentRound(0);
-      // _setCurrentTeam(0);
-
-      // _setCurrentQuestion(response.data.question);
-
-      // advanceRound();
-
-      // _setIsInGame(true);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("hostEndRound error", err);
-      alert("Error ending round");
-    }
-  };
-
-  // called to move on to the next round
-  const teamBuzzIn = async () => {
-    try {
-      const response: ISocketResponse = await sendSocketWait(
-        "lightning_buzz_in",
-        {
-          lobbyCode: lobbyData.lobbyCode,
-        }
-      );
-
-      const resp: ILobbyData = response.data.lobby;
-
-      console.log("teamBuzzIn", response);
-
-      _setLobbyData(resp);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("teamBuzzIn error", err);
-      alert("Error advancing round");
-    }
-  };
-
-  // called to move on to the next round
-  const advanceRound = async (question: IQuestionType) => {
-    try {
-      const response: ISocketResponse = await sendSocketWait("advance_round", {
-        lobbyCode: lobbyData.lobbyCode,
-        question,
-      });
-
-      const resp: ILobbyData = response.data.lobby;
-
-      console.log("advanceRound", response);
-
-      _setLobbyData(resp);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("advanceRound error", err);
-      alert("Error advancing round");
-    }
-  };
-
-  // start ligtning round
-  const beginLightningRound = async (question: IQuestionType) => {
-    try {
-      const response: ISocketResponse = await sendSocketWait(
-        "begin_lightning_round",
-        {
-          lobbyCode: lobbyData.lobbyCode,
-          question,
-        }
-      );
-
-      const resp: ILobbyData = response.data.lobby;
-
-      console.log("beginLightningRound", response);
-
-      _setLobbyData(resp);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-      console.error("beginLightningRound error", err);
-      alert("Error advancing round");
-    }
-  };
-
-  const answerLightningQuestion = async (answerChosen: IAnswerType | false) => {
-    try {
-      const response: ISocketResponse = await sendSocketWait(
-        "choose_lightning_answer",
-        {
-          lobbyCode: lobbyData.lobbyCode,
-          answerChosen,
-        }
-      );
-
-      const responseLobby: ILobbyData = response.data.lobby;
-      console.log("choose_lightning_answer responseLobby", responseLobby);
-
-      _setLobbyData(responseLobby);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-    }
-  };
-
-  // from client to server
-  // when the host asks to finish the game (after the final round_end screen)
-  const hostEndGame = async () => {
-    try {
-      const response: ISocketResponse = await sendSocketWait("end_game", {
-        lobbyCode: lobbyData.lobbyCode,
-      });
-
-      const responseLobby: ILobbyData = response.data.lobby;
-      console.log("end_game responseLobby", responseLobby);
-
-      _setLobbyData(responseLobby);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-    }
-  };
-
-  // choose which answer was chosen
-  const answerQuestion = async (answerChosen: IAnswerType | false) => {
-    try {
-      const response: ISocketResponse = await sendSocketWait(
-        "choose_team_answer",
-        {
-          lobbyCode: lobbyData.lobbyCode,
-          answerChosen,
-        }
-      );
-
-      const responseLobby: ILobbyData = response.data.lobby;
-      console.log("answerQuestion responseLobby", responseLobby);
-
-      _setLobbyData(responseLobby);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
-    }
-  };
-
   const updatePlayerTeam = async (
     player: IPlayerData,
-    team: number | string
+    team: number | string,
   ) => {
+    let teams = teamsData;
+    let teamId = Number(team);
+    if (team === "new_team") {
+      teamId = Math.max(...teams.map((t) => t.teamId)) + 1;
+      teams = [...teams, { teamId, teamName: `Team ${teamId}`, teamScore: 0 }];
+    }
+    await action("update_teams", {
+      teams,
+      players: lobbyData.players.map((p) =>
+        p.socketId === player.socketId ? { ...p, teamId } : p,
+      ),
+    });
+  };
+  const hostGetQuestion = async (
+    isLightningQuestion = false,
+  ): Promise<IQuestionType> => {
     try {
-      let teamId = team;
-      let teamsDataCopy: ITeamData[] = teamsData;
-
-      if (team === "new_team") {
-        const newTeam: ITeamData = {
-          teamId: teamsData.length + 1,
-          teamName: `Team ${teamsData.length + 1}`,
-          teamScore: 0,
-        };
-        teamsDataCopy = [...teamsData, newTeam];
-        _setTeamsData(teamsDataCopy);
-
-        teamId = newTeam.teamId;
-      }
-
-      // update player teams
-      const newPlayers: IPlayerData[] = lobbyData.players.map(
-        (p: IPlayerData) => {
-          if (p.socketId === player.socketId) {
-            console.log("updating player team", p, teamId);
-            return { ...p, teamId: Number(teamId) };
-          }
-          return p;
-        }
-      );
-      _setLobbyData({ ...lobbyData, players: newPlayers });
-
-      const response: ISocketResponse = await sendSocketWait("update_teams", {
-        lobbyCode: lobbyData.lobbyCode,
-        teams: teamsDataCopy,
-        players: newPlayers,
-      });
-
-      const responseLobby: ILobbyData = response.data.lobby;
-
-      console.log("Acccck", responseLobby);
-
-      _setLobbyData(responseLobby);
-
-      // _setHostName(resp.hostName);
-      // _setLobbyCode(resp.lobbyCode);
-      // _setIsLobbyHost(false);
-      // _setIsInLobby(true);
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
+      return (await request("get_question", { isLightningQuestion })).data
+        .question;
+    } catch (e) {
+      setError(e.message);
+      return undefined;
     }
   };
-
-  const hostUpdateLobbyConfig = async (lobbyConfig: ILobbyConfig) => {
+  const hostUpdateLobbyConfig = async (
+    lobbyConfig: ILobbyConfig,
+  ): Promise<ILobbyData> => {
     try {
-      const response: ISocketResponse = await sendSocketWait(
-        "update_lobby_config",
-        {
-          lobbyCode: lobbyData.lobbyCode,
-          lobbyConfig,
-        }
-      );
-
-      const resp: ILobbyData = response.data.lobby;
-
-      console.log("update_lobby_config", response);
-
-      _setLobbyData(resp);
-
-      return resp;
-    } catch (err) {
-      // the server did not acknowledge the event in the given delay
+      return (await request("update_lobby_config", { lobbyConfig })).data.lobby;
+    } catch (e) {
+      setError(e.message);
+      return undefined;
     }
   };
-
   return (
     <DataContext.Provider
       value={{
         socketConnected,
-
-        isInLobby,
-        isLobbyHost,
+        playerName,
         lobbyData,
         prevLobbyData,
-
-        roundSecondsLeft,
-
-        // lobbyCode,
-        // lobbyPlayers,
-
+        isLobbyHost,
         teamsData,
-        // hostConfirmQuestion,
-        // hostName,
-
-        playerName,
-
-        isInGame,
-
-        // currentQuestion,
-        // currentRound,
-        // currentTeam,
-
-        // gameState,
-
-        // lobby functions
-        createNewLobby,
+        error,
+        roundSecondsLeft,
+        isInLobby: Boolean(lobbyData),
+        isInGame: Boolean(lobbyData && lobbyData.gameState !== "lobby"),
+        setPlayerName,
+        createNewLobby: () => action("create_lobby", { playerName }),
+        joinGameLobby: (lobbyCode: string) =>
+          action("join_lobby", { lobbyCode: lobbyCode.trim(), playerName }),
         hostUpdateLobbyConfig,
         hostGetQuestion,
-
-        MOCK_fakeJoinLobby,
-        joinGameLobby,
-        setPlayerName,
         updatePlayerTeam,
-
-        // host functions
-        startGame,
-        hostEndRound,
-        advanceRound,
-        beginLightningRound,
-        startTheLightningBuzzer,
-        teamBuzzIn,
-
-        hostEndGame,
-
-        answerQuestion,
-        answerLightningQuestion,
+        startGame: () => action("start_game"),
+        hostEndRound: () => action("end_round"),
+        continueLightning: () => action("continue_lightning"),
+        advanceRound: (question: IQuestionType) =>
+          action("advance_round", { question }),
+        beginLightningRound: (question: IQuestionType) =>
+          action("begin_lightning_round", { question }),
+        startTheLightningBuzzer: () => action("begin_lightning_buzzer"),
+        teamBuzzIn: (challenge?: { step: number; target: number }) =>
+          action("lightning_buzz_in", { challenge }),
+        hostEndGame: () => action("end_game"),
+        answerQuestion: (answerChosen: IAnswerType | false) =>
+          action("choose_team_answer", { answerChosen }),
+        answerLightningQuestion: (answerChosen: IAnswerType | false) =>
+          action("choose_lightning_answer", { answerChosen }),
       }}
     >
+      {error && (
+        <div className="gameError" role="alert">
+          {error}
+          <button onClick={() => setError("")} aria-label="Dismiss error">
+            ×
+          </button>
+        </div>
+      )}
       {children}
     </DataContext.Provider>
   );
 };
-
-//extract the type
-type IDataProviderContext = {
+type ContextValue = {
   socketConnected: boolean;
-
-  isInLobby: boolean;
-  isLobbyHost: boolean;
+  playerName: string;
   lobbyData: ILobbyData;
   prevLobbyData: ILobbyData;
-
+  isLobbyHost: boolean;
   teamsData: ITeamData[];
-  // hostConfirmQuestion: IQuestionType | false;
-  playerName: string;
-
+  error: string;
+  roundSecondsLeft: number | null;
+  isInLobby: boolean;
   isInGame: boolean;
-
-  roundSecondsLeft?: number;
-
-  // currentQuestion: IQuestionType;
-  // currentRound: number;
-  // currentTeam: number;
-
-  createNewLobby: () => Promise<void>;
-  hostUpdateLobbyConfig: (lobbyConfig: ILobbyConfig) => Promise<ILobbyData>;
-  hostGetQuestion: (isLightningQuestion?: boolean) => Promise<IQuestionType>;
-
-  joinGameLobby: (lobbyCode: string) => Promise<void>;
   setPlayerName: (name: string) => Promise<void>;
+  createNewLobby: () => Promise<void>;
+  joinGameLobby: (code: string) => Promise<void>;
+  hostUpdateLobbyConfig: (config: ILobbyConfig) => Promise<ILobbyData>;
+  hostGetQuestion: (lightning?: boolean) => Promise<IQuestionType>;
   updatePlayerTeam: (
     player: IPlayerData,
-    team: number | string
+    team: number | string,
   ) => Promise<void>;
-
   startGame: () => Promise<void>;
   hostEndRound: () => Promise<void>;
+  continueLightning: () => Promise<void>;
   advanceRound: (question: IQuestionType) => Promise<void>;
   beginLightningRound: (question: IQuestionType) => Promise<void>;
   startTheLightningBuzzer: () => Promise<void>;
-  teamBuzzIn: () => Promise<void>;
-
+  teamBuzzIn: (challenge?: { step: number; target: number }) => Promise<void>;
   hostEndGame: () => Promise<void>;
-
   answerQuestion: (answer: IAnswerType | false) => Promise<void>;
   answerLightningQuestion: (answer: IAnswerType | false) => Promise<void>;
-
-  MOCK_fakeJoinLobby: (lobbyCode: string) => Promise<void>;
 };
-
+const DataContext = createContext<ContextValue>(null);
 export { DataContext, DataContextProvider };

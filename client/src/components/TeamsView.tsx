@@ -63,7 +63,7 @@ export default function TeamsView() {
       // check for wrong answers
       lobbyData.teams.forEach((team: ITeamData, index: number) => {
         const prevTeam = prevLobbyData.teams[index];
-        if (prevTeam.wrongGuesses < team.wrongGuesses) {
+        if ((prevTeam?.wrongGuesses || 0) < (team.wrongGuesses || 0)) {
           // play fail sound
           playRandomWrongSound(lobbyData.randomSeed);
           setShowXmark(true);
@@ -158,7 +158,7 @@ export default function TeamsView() {
 
             <strong>{team.teamName} Score: </strong>
             <strong className="scoreBoard ">
-              {team.teamScore && team.teamScore.toString().padStart(4, "0")}
+              {team.teamScore.toString().padStart(4, "0")}
             </strong>
 
             <ul className="playerUl">

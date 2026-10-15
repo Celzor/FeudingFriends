@@ -1,7 +1,5 @@
-import { io, Socket } from "socket.io-client";
-
-// "undefined" means the URL will be computed from the `window.location` object
-const DEV_ENDPOINT = "http://localhost:3010/";
-const URL = process.env.NODE_ENV === "production" ? undefined : DEV_ENDPOINT;
-
-export const socket: Socket = io(URL);
+import { io } from "socket.io-client";
+export const isRefract = window.parent !== window;
+export const socket = isRefract
+  ? new (await import("./refract/transport")).RefractTransport()
+  : io(import.meta.env.VITE_SERVER_URL || undefined, { autoConnect: true });
