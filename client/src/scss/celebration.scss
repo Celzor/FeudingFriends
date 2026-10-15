@@ -114,11 +114,28 @@
   padding-block: clamp(16px, 4vw, 32px);
   overflow-wrap: anywhere;
 }
+#root .gameFinale [data-finale-started="false"] {
+  .winning-text,
+  .winner-revel1,
+  .winner-revel2,
+  .winner-revel3,
+  .mainTeamContainer,
+  .finaleTrophy,
+  .finaleRibbon,
+  .celebration--finale {
+    animation-play-state: paused;
+  }
+}
+.gameFinale .celebration--finale {
+  animation: finaleFade 0.25s 7s both;
+}
 .gameFinale .finaleTrophy {
   font-size: clamp(4rem, 12vw, 7rem);
   line-height: 1.3;
   filter: drop-shadow(4px 5px 0 #392347);
-  animation: finaleTrophyBounce 1.3s ease-in-out infinite alternate;
+  animation:
+    finaleFade 0.5s 7s both,
+    finaleTrophyBounce 1.3s 7s ease-in-out infinite alternate;
 }
 .gameFinale .finaleRibbon {
   display: inline-block;
@@ -132,6 +149,7 @@
   font-size: clamp(1.2rem, 3vw, 1.7rem);
   letter-spacing: 0.1em;
   transform: rotate(-3deg);
+  animation: finaleFade 0.5s 7s both;
 }
 .gameFinale .winning-text,
 .gameFinale .winner-revel1,
@@ -140,16 +158,18 @@
   font-size: clamp(1.7rem, 5vw, 3rem);
   line-height: 1.3;
   margin: 12px auto;
-  animation: finaleReveal 0.65s both;
+  animation: finaleFade 5s ease-in-out both;
 }
 .gameFinale .winner-revel1 {
-  animation-delay: 0.3s;
+  animation: finaleFade 1s 5s ease-in-out both;
 }
 .gameFinale .winner-revel2 {
-  animation-delay: 0.7s;
+  animation: finaleFade 2s 6s ease-in-out both;
 }
 .gameFinale .winner-revel3 {
-  animation-delay: 1s;
+  animation:
+    finaleFade 1s 7s ease-in-out both,
+    finaleWinnerSpin 2s 7s linear;
   color: #ffe548;
   text-shadow: 3px 4px 0 #392347;
 }
@@ -159,7 +179,7 @@
   flex-direction: row;
   align-items: stretch;
   margin-top: 24px;
-  animation: finaleReveal 0.65s 1.3s both;
+  animation: finaleFade 1s 8.5s ease-in-out both;
 }
 #root .gameFinale .teamContainer {
   display: flex;
@@ -223,14 +243,22 @@
     transform: rotate(8deg) translateY(-6px);
   }
 }
-@keyframes finaleReveal {
+@keyframes finaleFade {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.95);
+    visibility: hidden;
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    visibility: visible;
+  }
+}
+@keyframes finaleWinnerSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -245,13 +273,15 @@
     display: none;
   }
   .gameFinale .finaleTrophy,
+  .gameFinale .finaleRibbon,
   .gameFinale .winning-text,
   .gameFinale .winner-revel1,
   .gameFinale .winner-revel2,
   .gameFinale .winner-revel3,
   #root .gameFinale .mainTeamContainer {
-    animation: none;
-    opacity: 1;
+    animation-name: finaleFade;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
     transform: none;
   }
 }

@@ -270,17 +270,50 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
     "data-music-status",
     "playing",
   );
-  expect((await gameAudioState(host)).lastStarted?.name).toBe("endingMusic");
+  const music = (await gameAudioState(host)).lastStarted;
+  expect(music?.name).toBe("endingMusic");
+  expect(
+    music?.offset,
+    "the victory track keeps its original musical intro",
+  ).toBe(0);
   expect(
     endingMusicRequests,
     "the original victory track loads once despite StrictMode",
   ).toBe(1);
   const finale = host.locator('[data-celebration="finale"]');
+  const winner = host.locator(".gameFinale .winner-revel3");
+  const standings = host.locator(".gameFinale .mainTeamContainer");
+  await expect(winner).toBeHidden();
+  await expect(standings).toBeHidden();
+  await expect(finale).toBeHidden();
+  // Follow actual playback, not page-load time: the final cadence is at 7–8s.
+  await host.waitForFunction(
+    (startedAt) => performance.now() - startedAt >= 6500,
+    music!.time,
+  );
+  await expect(winner).toBeHidden();
+  await expect(standings).toBeHidden();
+  await expect(finale).toBeHidden();
+  await expect(winner).toBeVisible({ timeout: 2000 });
+  const revealedAfter = await host.evaluate(
+    (startedAt) => performance.now() - startedAt,
+    music!.time,
+  );
+  expect(revealedAfter).toBeGreaterThanOrEqual(7000);
+  expect(revealedAfter).toBeLessThan(8200);
   await expect(finale).toBeVisible();
   expect(await finale.locator(".celebrationFirework").count()).toBeGreaterThan(
     1,
   );
   await expect(finale).toHaveCSS("pointer-events", "none");
+  // Stopping sound mid-reveal must not strand the remaining results offscreen.
+  await host
+    .getByRole("button", { name: "Stop celebration music", exact: true })
+    .click();
+  await expect(host.locator(".finaleAudio")).toHaveAttribute(
+    "data-music-status",
+    "idle",
+  );
   await host
     .locator(".gameFinale .winner-revel3, .gameFinale .mainTeamContainer")
     .evaluateAll(async (elements) => {
@@ -309,13 +342,6 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
     ),
   ).toBeTruthy();
   await host.screenshot({ path: "output/mobile-finale.png", fullPage: true });
-  await host
-    .getByRole("button", { name: "Stop celebration music", exact: true })
-    .click();
-  await expect(host.locator(".finaleAudio")).toHaveAttribute(
-    "data-music-status",
-    "idle",
-  );
   expect((await gameAudioState(host)).music.status).toBe("idle");
   expect(errors).toEqual([]);
 });
