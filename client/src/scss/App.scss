@@ -266,18 +266,18 @@ Question Select
 Gameplay
 ***************************************************************************************/
 .mainGameQuestion {
-  margin-top: -100px;
-  line-height: 0.5;
+  margin-top: 0;
+  line-height: 1.4;
 }
 .teamData {
   display: flex;
   flex: 1;
   flex-direction: row;
-  width: "100%";
+  width: 100%;
 }
 
 .renderQuestion {
-  margin-top: 50px;
+  margin-top: 20px;
 }
 
 .scoreBoard {

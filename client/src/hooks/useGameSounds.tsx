@@ -1,75 +1,71 @@
-import React, { useMemo, useEffect, useContext, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  initializeGameAudio,
+  playGameSound,
+  requestGameOverMusic,
+  unlockGameAudio,
+  type MusicState,
+  type SoundName,
+  type SoundOptions,
+} from "../audio/gameAudio";
 
-import { useSound } from "use-sound";
+export function useGameAudioPreload() {
+  useEffect(initializeGameAudio, []);
+}
 
-const correctSfx = `${import.meta.env.BASE_URL}sounds/correct.mp3`;
-const correct1Sfx = `${import.meta.env.BASE_URL}sounds/correct1.mp3`;
-const correct2Sfx = `${import.meta.env.BASE_URL}sounds/correct2.mp3`;
-const correct3Sfx = `${import.meta.env.BASE_URL}sounds/correct3.mp3`;
-
-const wrongSfx = `${import.meta.env.BASE_URL}sounds/Fail.mp3`;
-const wrong1Sfx = `${import.meta.env.BASE_URL}sounds/wrong1.mp3`;
-const wrong2Sfx = `${import.meta.env.BASE_URL}sounds/wrong2.mp3`;
-const tooLongWwrong3Sfx = `${import.meta.env.BASE_URL}sounds/wrong3.mp3`;
-const wrong4Sfx = `${import.meta.env.BASE_URL}sounds/wrong4.mp3`;
-const wrong5Sfx = `${import.meta.env.BASE_URL}sounds/boi mario.mp3`;
-
-const applauseshortSfx = `${import.meta.env.BASE_URL}sounds/applauseshort.mp3`;
-const gaspSfx = `${import.meta.env.BASE_URL}sounds/gasp.mp3`;
-const gasp2Sfx = `${import.meta.env.BASE_URL}sounds/gasp2.mp3`;
-const endingMusicSfx = `${import.meta.env.BASE_URL}sounds/endingMusic.mp3`;
+const playWrong = (options?: SoundOptions) => playGameSound("wrong", options);
+const playApplause = (options?: SoundOptions) =>
+  playGameSound("applause", options);
+const playTooLongWwrong3 = (options?: SoundOptions) =>
+  playGameSound("tooLong", options);
+const pickSound = (
+  names: SoundName[],
+  seed: number,
+  options?: SoundOptions,
+) => {
+  const index = Math.min(
+    names.length - 1,
+    Math.max(0, Math.floor((Number.isFinite(seed) ? seed : 0) * names.length)),
+  );
+  return playGameSound(names[index], options);
+};
+const playRandomCorrectSound = (seed: number, options?: SoundOptions) =>
+  pickSound(["correct", "correct1", "correct2", "correct3"], seed, options);
+const playRandomWrongSound = (seed: number, options?: SoundOptions) =>
+  pickSound(["wrong", "wrong1", "wrong2", "wrong4", "wrong5"], seed, options);
+const playRandomStealSound = (seed: number, options?: SoundOptions) =>
+  pickSound(["gasp", "gasp2"], seed, options);
 
 export default function useGameSounds() {
-  const [playCorrect] = useSound(correctSfx, { volume: 0.4 });
-  const [playCorrect1] = useSound(correct1Sfx, { volume: 0.4 });
-  const [playCorrect2] = useSound(correct2Sfx, { volume: 0.4 });
-  const [playCorrect3] = useSound(correct3Sfx, { volume: 0.4 });
-
-  const [playWrong] = useSound(wrongSfx, { volume: 0.2 });
-  const [playWrong1] = useSound(wrong1Sfx, { volume: 0.2 });
-  const [playWrong2] = useSound(wrong2Sfx, { volume: 0.2 });
-  const [playTooLongWwrong3] = useSound(tooLongWwrong3Sfx, { volume: 0.2 });
-  const [playWrong4] = useSound(wrong4Sfx, { volume: 0.2 });
-  const [playWrong5] = useSound(wrong5Sfx, { volume: 0.2 });
-
-  const [playApplause] = useSound(applauseshortSfx, { volume: 0.2 });
-
-  const [playGasp] = useSound(gaspSfx, { volume: 0.2 });
-  const [playGasp2] = useSound(gasp2Sfx, { volume: 0.2 });
-
-  const [playGameOver] = useSound(endingMusicSfx, { volume: 0.4 });
-
-  // for random sound
-  const playRandomCorrectSound = function (randSeed: number) {
-    const soundFuncs = [playCorrect, playCorrect1, playCorrect2, playCorrect3];
-
-    const selectedSound = soundFuncs[Math.floor(randSeed * soundFuncs.length)];
-
-    selectedSound();
-  };
-
-  const playRandomWrongSound = function (randSeed: number) {
-    const soundFuncs = [
-      playWrong,
-      playWrong1,
-      playWrong2,
-      // playWrong3,
-      playWrong4,
-      playWrong5,
-    ];
-
-    const selectedSound = soundFuncs[Math.floor(randSeed * soundFuncs.length)];
-
-    selectedSound();
-  };
-
-  const playRandomStealSound = function (randSeed: number) {
-    const soundFuncs = [playGasp, playGasp2];
-
-    const selectedSound = soundFuncs[Math.floor(randSeed * soundFuncs.length)];
-
-    selectedSound();
-  };
+  const music = useRef<ReturnType<typeof requestGameOverMusic> | null>(null);
+  const [gameOverMusicState, setGameOverMusicState] = useState<MusicState>({
+    status: "idle",
+  });
+  const playGameOver = useCallback(() => {
+    if (!music.current)
+      music.current = requestGameOverMusic(setGameOverMusicState);
+    else music.current.retry();
+  }, []);
+  const retryGameOver = useCallback(() => {
+    if (music.current) music.current.retry();
+    else {
+      music.current = requestGameOverMusic(setGameOverMusicState);
+      // A deliberate Play after Stop must also unlock a suspended context.
+      unlockGameAudio();
+    }
+  }, []);
+  const stopGameOver = useCallback(() => {
+    music.current?.stop();
+    music.current = null;
+    setGameOverMusicState({ status: "idle" });
+  }, []);
+  useEffect(
+    () => () => {
+      music.current?.stop();
+      music.current = null;
+    },
+    [],
+  );
 
   return {
     playWrong,
@@ -78,6 +74,9 @@ export default function useGameSounds() {
     playRandomWrongSound,
     playRandomStealSound,
     playGameOver,
+    retryGameOver,
+    stopGameOver,
+    gameOverMusicState,
     playTooLongWwrong3,
   };
 }

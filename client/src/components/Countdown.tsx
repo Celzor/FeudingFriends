@@ -9,18 +9,22 @@ export default function Countdown() {
   );
   return (
     <div className="countdownWell">
-      <div
-        role="timer"
-        aria-label={`${Math.ceil(roundSecondsLeft / 1000)} seconds remaining`}
-        data-testid="countdown"
-        className={`countdown ${ratio <= 0.25 ? "countdownUrgent" : ""}`}
-        style={{
-          color: `hsl(${Math.round(ratio * 120)} 75% 58%)`,
-          transform: `scale(${1 + (1 - ratio) * 0.65})`,
-        }}
-      >
-        {Math.ceil(roundSecondsLeft / 1000)}
-        <span className="countdownUnit">s</span>
+      <div className="countdownDisplay">
+        <div
+          role="timer"
+          aria-label={`${Math.ceil(roundSecondsLeft / 1000)} seconds remaining`}
+          data-testid="countdown"
+          className={`countdown ${ratio <= 0.25 ? "countdownUrgent" : ""}`}
+          style={{
+            color: `hsl(${Math.round(ratio * 120)} 75% 58%)`,
+            transform: `scale(${1 + (1 - ratio) * 0.65})`,
+          }}
+        >
+          <span className="countdownDigits">
+            {Math.ceil(roundSecondsLeft / 1000)}
+          </span>
+          <span className="countdownUnit">s</span>
+        </div>
       </div>
       <span className="countdownLabel">
         {roundSecondsLeft === 0 ? "Time’s up!" : "Make it count!"}

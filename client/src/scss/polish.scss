@@ -25,7 +25,7 @@ select {
   justify-content: center;
 }
 #root .mainContainer {
-  width: min(1100px, 100%);
+  width: 100%;
   border: 3px solid #ffe548;
   border-radius: 12px;
   overflow: clip;
@@ -49,6 +49,23 @@ select {
 #root .lineHeightReduce {
   line-height: 1.4;
 }
+#root .header-info {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+#root .header-info h2,
+#root .header-info p {
+  margin: 8px 0;
+}
+#root .mainGameQuestion > h1 {
+  margin: 20px 0 0;
+  line-height: 1.3;
+}
+#root .currentTeamGuessing {
+  margin: 12px 0 20px;
+  line-height: 1.4;
+}
 #root .questionTitle {
   font-size: clamp(1.3rem, 3vw, 2rem);
   line-height: 1.35;
@@ -63,6 +80,9 @@ select {
   border: 2px solid #e0c6ff;
   font-size: clamp(1rem, 2.3vw, 1.4rem);
   gap: 10px;
+  margin: 0;
+  min-width: 0;
+  flex: 0 0 auto;
 }
 #root .answerButton .text {
   overflow-wrap: anywhere;
@@ -79,6 +99,18 @@ select {
   flex-shrink: 0;
 }
 #root .answerButtonContainer {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 16px;
+  margin: 20px 0;
+  width: 100%;
+}
+#root .answerColumn {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
   gap: 12px;
 }
 button,
@@ -116,25 +148,49 @@ select {
 .countdownWell {
   display: grid;
   place-items: center;
-  gap: 10px;
-  padding: 30px 0 14px;
-  min-height: 150px;
+  grid-template-rows: 96px auto 7px;
+  gap: 8px;
+  width: min(320px, 100%);
+  margin: 12px auto 0;
+  padding: 0 12px 14px;
+  line-height: 1.3;
+}
+.countdownDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 96px;
 }
 .countdown {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
   font-family: seven, monospace;
   font-size: 3rem;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  transform-origin: center bottom;
+  transform-origin: center center;
   transition:
     color 0.1s linear,
     transform 0.1s linear;
   text-shadow: 2px 3px 0 #111;
 }
+.countdownDigits {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: center;
+}
 .countdownUnit {
+  position: absolute;
+  left: 100%;
+  bottom: 0.15em;
   font-family: Acme, sans-serif;
   font-size: 1rem;
-  margin-left: 5px;
+  margin-left: 6px;
+  text-align: left;
 }
 .countdownLabel {
   font-size: 0.9rem;
@@ -143,7 +199,7 @@ select {
 .countdownTrack {
   height: 7px;
   background: #171717;
-  width: min(260px, 85%);
+  width: 100%;
   border-radius: 4px;
   overflow: hidden;
 }
@@ -248,9 +304,6 @@ select {
   #root .PlayersInLobby {
     width: 100%;
   }
-  #root .answerButtonContainer {
-    flex-direction: column;
-  }
   #root .lobbyConfig {
     flex-wrap: wrap;
   }
@@ -270,6 +323,15 @@ select {
   .challengeTarget {
     width: 80px;
     font-size: 0.95rem;
+  }
+}
+@media (max-width: 760px) {
+  #root .answerButtonContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+  #root .answerColumn {
+    flex-basis: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -333,6 +395,43 @@ select {
 #root .otherTeam {
   min-width: min(200px, 100%);
   width: auto;
+}
+#root .otherTeam {
+  color: #f0e4ff;
+}
+#root .playerNameLi {
+  color: #281a36;
+}
+#root .finalRoundTeam {
+  border-color: #d2ad44;
+}
+#root .finalRoundTeam.currentTeam {
+  border-color: #ffe548;
+  box-shadow:
+    0 0 0 2px #392347,
+    0 0 18px #ffe54844;
+}
+.teamRoundWarning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 2px dashed #ffe548;
+  border-radius: 6px;
+  background: #392347;
+  color: #ffe548;
+  font-size: clamp(0.9rem, 1.6vw, 1.15rem);
+  line-height: 1.35;
+}
+.teamRoundWarning strong {
+  letter-spacing: 0.08em;
+}
+.currentTeam .teamRoundWarning {
+  background: #ffe548;
+  color: #392347;
+  border-color: #392347;
 }
 
 #root .lobbyTopContainer {
