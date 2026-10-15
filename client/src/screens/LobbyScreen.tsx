@@ -10,6 +10,7 @@ import {
 import { DataContext } from "../providers/DataProvider";
 
 import LoadingButton from "../components/LoadingButton";
+import { isRefract } from "../socket";
 
 import "../scss/LobbyScreen.scss";
 function LobbyConfig() {
@@ -84,7 +85,7 @@ function LobbyConfig() {
       <h2>Lobby Config</h2>
       <div className="lobbyConfig">
         <div className="questionSet" key={"test"}>
-          <p>Question Sets</p>
+          <label htmlFor="questionPools">Question Sets</label>
           <select
             className="questionPools"
             name="questionPools"
@@ -94,7 +95,7 @@ function LobbyConfig() {
             onChange={updateQuestionPools}
             value={questionPools.map(String)} // Convert numbers to strings
           >
-            {[3, 4, 5, 6, 7].map((question: number) => (
+            {[3, 4, 5, 6, 7, 8].map((question: number) => (
               <option value={question} key={question}>
                 {question}
               </option> // Add key prop to option element
@@ -103,34 +104,34 @@ function LobbyConfig() {
         </div>
         <div className="winConditions">
           <div key={"test1"}>
-            <p>Round Count</p>
+            <label htmlFor="rounds">Round Count</label>
             <input
               className="playerInput"
               type="number"
               name="rounds"
               id="rounds"
               min="1"
-              max="100"
+              max="32"
               value={rounds}
               onChange={updateRounds}
               disabled={!isLobbyHost}
             />
 
-            <p>Round Timer</p>
+            <label htmlFor="roundTimer">Seconds per answer (0 = off)</label>
             <input
               className="playerInput"
               type="number"
               name="timer"
               id="roundTimer"
               min="0"
-              max="50000"
+              max="300"
               value={roundTimer}
               onChange={updateTimer}
               disabled={!isLobbyHost}
             />
           </div>
           <div className="LightningRound">
-            <p>Lightning Round</p>
+            <label htmlFor="lightningRound">Lightning Round</label>
             <input
               className="playerInput"
               type="checkbox"
@@ -142,7 +143,7 @@ function LobbyConfig() {
             />
           </div>
           <div key={"test2"}>
-            <p>Winning Score</p>
+            <label htmlFor="score">Winning Score</label>
             <input
               className="playerInput"
               type="number"
@@ -159,12 +160,11 @@ function LobbyConfig() {
   );
 }
 
-const IS_DEV = process.env.NODE_ENV !== "production";
+
 
 function PlayersInLobby() {
   const {
     isLobbyHost,
-    MOCK_fakeJoinLobby,
     lobbyData,
     teamsData,
     updatePlayerTeam,
@@ -174,36 +174,26 @@ function PlayersInLobby() {
     <div className="PlayersInLobby">
       <h2>Players in Lobby</h2>
 
-      {IS_DEV && (
-        <LoadingButton
-          buttonText="Add Fake User"
-          onClick={async () => {
-            // Add fake user
-
-            MOCK_fakeJoinLobby(lobbyData.lobbyCode);
-          }}
-        />
-      )}
-
       <div className="PlayersInLobbyInner">
-        <ul className="playerLobbyUl">
+        <div className="playerLobbyUl">
           {lobbyData.players.map((player: IPlayerData, index: number) => (
             <div className="PlayersInLobbyRow" key={index}>
-              <li className="playyerInLobbyLi">{player.playerName}</li>
+              <span className="playyerInLobbyLi">{player.playerName}</span>
               {!isLobbyHost && player.teamId !== false ? player.teamId : ""}
               {isLobbyHost && (
                 <select
+                  aria-label={`Team for ${player.playerName}`}
                   name="team"
                   id="team"
                   value={player.teamId !== false ? player.teamId : ""}
                   onChange={(e) => updatePlayerTeam(player, e.target.value)}
                 >
-                  <option disabled selected value="">
+                  <option disabled value="">
                     ---
                   </option>
 
                   {teamsData.map((team) => (
-                    <option value={team.teamId}>
+                    <option key={team.teamId} value={team.teamId}>
                       {team.teamName} ({team.teamId})
                     </option>
                   ))}
@@ -213,7 +203,7 @@ function PlayersInLobby() {
               )}
             </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );
@@ -257,7 +247,8 @@ export default function LobbyScreen() {
         <h1>
           Game ID: {lobbyData.lobbyCode}
           <button
-            style={{ marginLeft: "10px", color: "blue" }}
+            hidden={isRefract}
+            className="copyButton"
             onClick={() => {
               navigator.clipboard.writeText(lobbyData.lobbyCode);
               setIsCopiedCode(true);
@@ -269,7 +260,8 @@ export default function LobbyScreen() {
             {isCopiedCode ? "Copied Code ✅" : "Copy Code"}
           </button>
           <button
-            style={{ marginLeft: "10px", color: "blue" }}
+            hidden={isRefract}
+            className="copyButton"
             onClick={() => {
               navigator.clipboard.writeText(
                 `${window.location.origin}/?__game_code=${lobbyData.lobbyCode}`
@@ -291,6 +283,8 @@ export default function LobbyScreen() {
       </div>
 
       <hr />
+
+      {isRefract && <p>Everyone in the call joins automatically.</p>}
 
       {/* lobby config */}
       <div className="lobbyTopContainer">

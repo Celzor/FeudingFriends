@@ -1,44 +1,5 @@
-# react backend with webpack and ts
+# Client
 
-## what you need
+See the [root README](../readme.md) for the npm workspace commands, standalone/Docker hosting, and static Refract deployment.
 
-- nvm
-- node 18
-- yarn
-
-## running dev
-
-`yarn install`
-`yarn start`
-
-## doing tests
-
-# install playwright
-
-`yarn install`
-`yarn playwright install`
-`yarn test`
-
-or watch it
-`yarn run test:watch`
-
-# generate tests
-
-start the servicers locally, this helps genrate tests
-
-`npx playwright codegen http://localhost:3011/`
-`npx playwright codegen https://feud.tgxn.net/`
-
-
-
-
-
-
-
-
-
-
-
-
-
-<a href="https://www.flaticon.com/free-icons/question-mark" title="question mark icons">Question mark icons created by Freepik - Flaticon</a>
+Use Node 24. From the repository root run `npm ci`, then `npm run dev`. Build the complete application with `npm run build`; the static activity output is `client/dist/`.

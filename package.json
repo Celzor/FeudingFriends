@@ -1,0 +1,27 @@
+{
+  "name": "feuding-friends",
+  "version": "2.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "generate": "node scripts/questions.mjs",
+    "dev": "npm run generate && concurrently -k -n server,client \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run generate && npm run build -w client && npm run build -w server",
+    "typecheck": "npm run typecheck -w client && npm run typecheck -w server",
+    "test": "npm run generate && tsx --test server/tests/*.test.ts",
+    "test:e2e": "npm run generate && npm run test -w client",
+    "start": "npm run start -w server"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "concurrently": "^10.0.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

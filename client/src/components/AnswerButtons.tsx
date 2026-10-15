@@ -94,7 +94,7 @@ export function AnswerButton({
     }
 
     return false;
-  }, [answer.answerSelected, isLobbyHost]);
+  }, [answer.answerSelected, isLobbyHost, roundEnd]);
 
   const buttonBackgroundColor = useMemo<string>(() => {
     //  backgroundColor: buttonDisabled
@@ -106,7 +106,7 @@ export function AnswerButton({
     if (answer.answerSelected) return "green";
     if (buttonDisabled) return "gray";
     return "#c498ff";
-  }, [answer.answerSelected, isLobbyHost]);
+  }, [answer.answerSelected, isLobbyHost, roundEnd]);
 
   return (
     <button

@@ -2,22 +2,22 @@ import React, { useMemo, useEffect, useContext, useState } from "react";
 
 import { useSound } from "use-sound";
 
-import correctSfx from "../../public/sounds/correct.mp3";
-import correct1Sfx from "../../public/sounds/correct1.mp3";
-import correct2Sfx from "../../public/sounds/correct2.mp3";
-import correct3Sfx from "../../public/sounds/correct3.mp3";
+const correctSfx = `${import.meta.env.BASE_URL}sounds/correct.mp3`;
+const correct1Sfx = `${import.meta.env.BASE_URL}sounds/correct1.mp3`;
+const correct2Sfx = `${import.meta.env.BASE_URL}sounds/correct2.mp3`;
+const correct3Sfx = `${import.meta.env.BASE_URL}sounds/correct3.mp3`;
 
-import wrongSfx from "../../public/sounds/Fail.mp3";
-import wrong1Sfx from "../../public/sounds/wrong1.mp3";
-import wrong2Sfx from "../../public/sounds/wrong2.mp3";
-import tooLongWwrong3Sfx from "../../public/sounds/wrong3.mp3";
-import wrong4Sfx from "../../public/sounds/wrong4.mp3";
-import wrong5Sfx from "../../public/sounds/boi mario.mp3";
+const wrongSfx = `${import.meta.env.BASE_URL}sounds/Fail.mp3`;
+const wrong1Sfx = `${import.meta.env.BASE_URL}sounds/wrong1.mp3`;
+const wrong2Sfx = `${import.meta.env.BASE_URL}sounds/wrong2.mp3`;
+const tooLongWwrong3Sfx = `${import.meta.env.BASE_URL}sounds/wrong3.mp3`;
+const wrong4Sfx = `${import.meta.env.BASE_URL}sounds/wrong4.mp3`;
+const wrong5Sfx = `${import.meta.env.BASE_URL}sounds/boi mario.mp3`;
 
-import applauseshortSfx from "../../public/sounds/applauseshort.mp3";
-import gaspSfx from "../../public/sounds/gasp.mp3";
-import gasp2Sfx from "../../public/sounds/gasp2.mp3";
-import endingMusicSfx from "../../public/sounds/endingMusic.mp3";
+const applauseshortSfx = `${import.meta.env.BASE_URL}sounds/applauseshort.mp3`;
+const gaspSfx = `${import.meta.env.BASE_URL}sounds/gasp.mp3`;
+const gasp2Sfx = `${import.meta.env.BASE_URL}sounds/gasp2.mp3`;
+const endingMusicSfx = `${import.meta.env.BASE_URL}sounds/endingMusic.mp3`;
 
 export default function useGameSounds() {
   const [playCorrect] = useSound(correctSfx, { volume: 0.4 });

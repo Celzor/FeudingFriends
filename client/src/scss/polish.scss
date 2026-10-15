@@ -1,0 +1,349 @@
+/* Keep the purple arcade stage, yellow trims, chunky controls, and seven-segment scores. */
+:root {
+  color-scheme: dark;
+  --stage-purple: #794db3;
+  --stage-yellow: #ffe548;
+  --stage-panel: #333;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: clamp(10px, 3vw, 32px);
+  min-width: 300px;
+}
+body,
+input,
+button,
+select {
+  font-family: Acme, sans-serif;
+}
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+#root .mainContainer {
+  width: min(1100px, 100%);
+  border: 3px solid #ffe548;
+  border-radius: 12px;
+  overflow: clip;
+  box-shadow: 9px 10px 0 #392347;
+}
+#root .mainGameContainer {
+  width: 100% !important;
+  padding: clamp(14px, 3vw, 32px);
+}
+.mainHeader {
+  position: relative;
+  width: 100%;
+  padding: 12px;
+}
+.mainHeader h1 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  margin: 10px 0;
+  color: #ffe548;
+}
+#root .header-info,
+#root .lineHeightReduce {
+  line-height: 1.4;
+}
+#root .questionTitle {
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  line-height: 1.35;
+  margin: 18px auto;
+}
+#root .answerButton {
+  min-height: 64px;
+  height: auto;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #e0c6ff;
+  font-size: clamp(1rem, 2.3vw, 1.4rem);
+  gap: 10px;
+}
+#root .answerButton .text {
+  overflow-wrap: anywhere;
+  flex: 1;
+}
+#root .answerButton .score {
+  min-width: 2ch;
+}
+#root .answerButton:disabled {
+  opacity: 1;
+  color: #fff;
+}
+#root .indexCircle {
+  flex-shrink: 0;
+}
+#root .answerButtonContainer {
+  gap: 12px;
+}
+button,
+input,
+select {
+  touch-action: manipulation;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #ffe548;
+  outline-offset: 4px;
+}
+button {
+  min-height: 44px;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+input,
+select {
+  max-width: 100%;
+}
+#root .playerInput {
+  min-height: 44px;
+}
+.activityLeave {
+  background: #392347;
+  color: white;
+  border: 1px solid #dcbfff;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+.countdownWell {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  padding: 30px 0 14px;
+  min-height: 150px;
+}
+.countdown {
+  font-family: seven, monospace;
+  font-size: 3rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transform-origin: center bottom;
+  transition:
+    color 0.1s linear,
+    transform 0.1s linear;
+  text-shadow: 2px 3px 0 #111;
+}
+.countdownUnit {
+  font-family: Acme, sans-serif;
+  font-size: 1rem;
+  margin-left: 5px;
+}
+.countdownLabel {
+  font-size: 0.9rem;
+  color: #eee;
+}
+.countdownTrack {
+  height: 7px;
+  background: #171717;
+  width: min(260px, 85%);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.countdownTrack > div {
+  height: 100%;
+  transition:
+    width 0.1s linear,
+    background 0.1s linear;
+}
+.countdownUrgent {
+  font-weight: bold;
+}
+.lightningChallenge {
+  width: 100%;
+}
+.challengeArena {
+  position: relative;
+  width: min(480px, 100%);
+  height: 300px;
+  margin: 18px auto;
+  border: 3px solid #ffe548;
+  border-radius: 12px;
+  background: #241a2f;
+  box-shadow: inset 0 0 0 5px #49305c;
+}
+.challengeTarget {
+  position: absolute;
+  width: 100px;
+  min-height: 58px;
+  border: 3px solid #fff4ae;
+  border-radius: 12px;
+  background: #ffe548;
+  color: #281a36;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 5px 0 #9a651a;
+}
+.challengeTarget:active {
+  box-shadow: 0 1px 0 #9a651a;
+}
+.challengeTarget:disabled {
+  background: #a36b96;
+  color: #fff;
+}
+.reactionTarget {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 100px;
+  font-size: 2rem;
+}
+.reactionTarget:not(:disabled) {
+  background: #84e06b;
+}
+.moleGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  height: 100%;
+  gap: 12px;
+  padding: 16px;
+}
+.moleHole {
+  background: #100d15;
+  border: 2px solid #67467e;
+  border-radius: 50%;
+  position: relative;
+}
+.moleHole .challengeTarget {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  font-size: 1.7rem;
+  min-height: 44px;
+}
+.activeHole {
+  border-color: #ffe548;
+}
+.lightningReveal {
+  border: 2px dashed #ffe548;
+  padding: 16px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+.lightningReveal h2 {
+  color: #ffe548;
+}
+#root .mainTeamContainer {
+  flex-wrap: wrap;
+  gap: 14px;
+}
+#root .teamContainer {
+  min-width: min(240px, 100%);
+  flex: 1;
+}
+@media (max-width: 650px) {
+  #root .lobbyTopContainer {
+    flex-direction: column;
+  }
+  #root .lobbyMain,
+  #root .PlayersInLobby {
+    width: 100%;
+  }
+  #root .answerButtonContainer {
+    flex-direction: column;
+  }
+  #root .lobbyConfig {
+    flex-wrap: wrap;
+  }
+  #root .wrongAnswerButton {
+    font-size: 1.1rem;
+    width: 100%;
+  }
+  #root .mainContainer {
+    box-shadow: 4px 5px 0 #392347;
+  }
+  #root .lineHeightReduce h1 {
+    font-size: 1.5rem;
+  }
+  .challengeArena {
+    height: 280px;
+  }
+  .challengeTarget {
+    width: 80px;
+    font-size: 0.95rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .pyro,
+  .before,
+  .after {
+    display: none;
+  }
+}
+.gameError {
+  position: relative;
+  margin: 12px;
+  padding: 12px 50px 12px 14px;
+  border: 2px solid #ffcf65;
+  background: #482532;
+  color: #fff4ae;
+  border-radius: 6px;
+}
+.gameError button {
+  position: absolute;
+  right: 5px;
+  top: 0;
+  background: transparent;
+  border: 0;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.lobbyConfig label {
+  display: block;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+.copyButton {
+  margin: 5px;
+  padding: 8px 12px;
+  background: #4b2b6c;
+  color: #fff4ae;
+  border: 2px solid #b48fd9;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+#root .mainHeader {
+  margin: 0;
+  line-height: 1.3;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#root .teamData {
+  flex-wrap: wrap;
+}
+#root .currentTeam,
+#root .otherTeam {
+  min-width: min(200px, 100%);
+  width: auto;
+}
+
+#root .lobbyTopContainer {
+  display: grid;
+}
+#root .lobbyMain,
+#root .PlayersInLobby {
+  width: auto;
+}
+
+.challengeArena:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 5px;
+}

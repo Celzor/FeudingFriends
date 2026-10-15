@@ -1,30 +1,7 @@
+# Server
 
-# do first
+See the [root README](../readme.md) for development and Docker deployment.
 
-- install nvm (under windows it's published here: https://github.com/coreybutler/nvm-windows/releases/tag/1.1.12)
+Use Node 24. From the repository root run `npm ci`, then `npm run dev`. The compiled server starts with `npm start` after `npm run build`.
 
-- install npm/node @ v 18
-```sh
-nvm install 18
-nvm use 18
-```
-
-- install yarn
-`npm install -g yarn`
-
-
-# install
-
-- install dependencies
-`yarn install`
-
-# run
-
-- start redis in docker compose
-`docker-compose up`
-
-- run server
-`yarn start`
-
-should say "listening on *:xxxx"
-
+The shared game referee lives in `shared/`. The standalone transport enforces host/player permissions, request limits, origin checks, answer redaction and timers. No Redis instance is required. State is in memory; restarting the server ends its games.

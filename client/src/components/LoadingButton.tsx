@@ -12,9 +12,7 @@ const LoadingButton: React.FC<{
 
   const handleClick = async () => {
     setLoading(true);
-    const result = await onClick();
-    console.log("button result", result);
-    setLoading(false);
+    try { await onClick(); } finally { setLoading(false); }
   };
 
   return (
