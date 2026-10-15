@@ -116,6 +116,8 @@ Original sound effects and victory music preload and decode once in the lobby. S
 
 After the game, the host can choose **Back to lobby** to bring everyone back for a rematch. The room code, players, team assignments, team names and settings stay; scores, strikes, boards and timers reset. This works in both the standalone website and Refract.
 
+The stage fills the available window or Refract activity height. Headers, scores and primary actions stay in their own flex rows; settings, rosters, answers and results scroll within the remaining space when needed. Desktop answers use two columns and narrow screens stack them, with controls retaining at least 44px touch targets.
+
 The victory track retains its complete intro and original reveal sequence: the score builds at 5–6 seconds, the winner appears across the final fanfare at 7–8 seconds, and standings follow at 8.5 seconds. This sequence starts with actual music playback, including after an autoplay retry; reduced motion removes the spin without revealing the winner early. If music cannot play, **Continue without music** runs the same buildup silently.
 
 ## Question data

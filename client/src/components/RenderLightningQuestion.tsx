@@ -29,7 +29,7 @@ export default function RenderLightningQuestion() {
   }, [reveal]);
   if (!question) return <p>Waiting for a question…</p>;
   return (
-    <div>
+    <div className="lightningQuestion">
       {celebrating && <Celebration intensity="round" />}
       <div className="questionTitle">{question.question}</div>
       {reveal ? (

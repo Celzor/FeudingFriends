@@ -1,0 +1,461 @@
+/* The stage follows the iframe/window height; only its content regions scroll. */
+:root {
+  --stage-gutter: clamp(6px, 1.5vmin, 16px);
+  --stage-gap: clamp(6px, 1vmin, 12px);
+}
+html {
+  height: 100%;
+}
+body {
+  display: block;
+  height: 100vh;
+  height: 100dvh;
+  min-width: 0;
+  padding: var(--stage-gutter);
+  overflow: hidden;
+}
+#root {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+}
+#root .mainContainer {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+#root .mainHeader {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-width: 4px;
+}
+#root .mainHeader h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(1.4rem, 4vmin, 2.2rem);
+  line-height: 1.15;
+  text-align: center;
+}
+#root .activityLeave {
+  order: 1;
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+#root .mainGameContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  padding: var(--stage-gap);
+  overflow: auto;
+  border-radius: 0 0 8px 8px;
+  overscroll-behavior: contain;
+}
+[hidden] {
+  display: none !important;
+}
+#root .gameHeader {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: var(--stage-gap);
+}
+#root .header-info {
+  flex: 0 0 auto;
+  gap: 4px 16px;
+}
+#root .header-info h2 {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.5vmin, 1.4rem);
+}
+#root .header-info p {
+  margin: 0;
+  font-size: 1rem;
+}
+#root .gameHeader > hr {
+  flex: 0 0 auto;
+  margin: 0;
+  border-width: 1px;
+}
+#root .gameContent {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+#root .mainGameQuestion,
+#root .questionPanel,
+#root .questionConfirm,
+#root .roundEndStats,
+#root .lightningStage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: var(--stage-gap);
+}
+#root .roundStatus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  gap: 12px;
+}
+#root .roundHeading {
+  flex: 1;
+  min-width: 0;
+}
+#root .roundHeading h1,
+#root .lightningStage > h1 {
+  margin: 0;
+  font-size: clamp(1.3rem, 3vmin, 1.8rem);
+  line-height: 1.2;
+}
+#root .roundHeading .currentTeamGuessing {
+  margin: 4px 0 0;
+  font-size: clamp(1rem, 2vmin, 1.2rem);
+  line-height: 1.3;
+}
+#root .countdownWell {
+  flex: 0 0 auto;
+  width: min(220px, 46%);
+  grid-template-rows: 64px auto 5px;
+  gap: 4px;
+  margin: 0 auto;
+  padding: 0 12px 4px;
+}
+#root .roundStatus .countdownWell {
+  margin: 0;
+}
+#root .countdownDisplay {
+  height: 64px;
+}
+#root .countdown {
+  font-size: 2rem;
+}
+#root .countdownLabel {
+  font-size: 0.8rem;
+}
+#root .countdownTrack {
+  height: 5px;
+}
+#root .mainGameQuestion > .renderQuestion,
+#root .lightningStage > .renderQuestion {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+}
+#root .questionPanel {
+  flex: 1 1 auto;
+}
+#root .questionTitle {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: clamp(1.1rem, 2.5vmin, 1.5rem);
+  line-height: 1.3;
+  box-shadow: 4px 4px 0 #8f8f6c;
+}
+#root .answerButtonContainer {
+  flex: 1 1 auto;
+  min-height: 64px;
+  justify-content: flex-start;
+  gap: 12px;
+  margin: 0;
+  padding: 2px 4px 6px 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+#root .answerColumn {
+  align-self: flex-start;
+  gap: 8px;
+}
+#root .answerButton {
+  min-height: 44px;
+  padding: 6px 10px;
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+  line-height: 1.25;
+  gap: 8px;
+}
+#root .answerButton .score {
+  padding: 2px 5px;
+  line-height: 1.2;
+}
+#root .answerButton:focus-visible {
+  outline-offset: -4px;
+}
+#root .indexCircle {
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  font-size: 1rem;
+}
+#root .wrongAnswerButtonContainer {
+  flex: 0 0 auto;
+}
+#root .wrongAnswerButton {
+  min-height: 44px;
+  height: auto;
+  padding: 6px 14px;
+  font-size: 1rem;
+}
+#root .teamData {
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: min(24dvh, 140px);
+  gap: 8px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+#root .currentTeam,
+#root .otherTeam {
+  flex: 1 1 160px;
+  min-width: min(160px, 100%);
+  margin: 0;
+  padding: 4px 6px;
+  border-width: 2px;
+  font-size: 1rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+#root .teamRoundWarning {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 8px;
+  margin: 0 0 4px;
+  padding: 3px 5px;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+#root .scoreBoard {
+  display: inline-block;
+  margin: 0 0 0 4px;
+  padding: 2px 5px;
+}
+#root .teamData .playerUl {
+  gap: 4px;
+  margin: 4px 0 0;
+  line-height: 1.2;
+}
+#root .teamData .playerNameLi {
+  margin: 0;
+  padding: 2px 5px;
+  border-width: 1px;
+  font-size: 0.85rem;
+}
+#root .questionConfirm > h2,
+#root .roundEndStats > h2,
+#root .lightningStage h2 {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: clamp(1.2rem, 3vmin, 1.6rem);
+}
+#root .questionConfirm .questionText {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: clamp(1.1rem, 2.5vmin, 1.4rem);
+}
+#root .answerListDiv {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+}
+#root .answerList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+#root .answerList li {
+  padding: 6px 10px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+#root .selectButtons,
+#root .roundEndStats > .buttonBody {
+  flex: 0 0 auto;
+}
+#root .selectButtons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#root .lightningQuestion {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--stage-gap);
+  overflow: auto;
+}
+#root .lightningQuestion > h2,
+#root .lightningQuestion > p {
+  flex: 0 0 auto;
+  margin: 0;
+}
+#root .lightningReveal {
+  min-height: 0;
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+}
+#root .lightningReveal p,
+#root .lightningChallenge p {
+  margin: 6px 0;
+}
+#root .challengeArena {
+  height: clamp(160px, 32dvh, 300px);
+  margin: 8px auto;
+}
+#root .startButton {
+  min-height: 44px;
+  padding: 6px 16px;
+  font-size: 1.1rem;
+}
+#root .gameFinale {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: var(--stage-gap);
+  padding: 0;
+}
+#root .finalePresentation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  align-items: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 16px;
+  padding: 8px;
+  overflow: auto;
+}
+#root .finaleAnnouncement {
+  min-width: 0;
+}
+#root .gameFinale .finaleTrophy {
+  font-size: clamp(3rem, 10dvh, 5rem);
+}
+#root .gameFinale .finaleRibbon {
+  margin: 4px 0;
+  padding: 4px 12px;
+  font-size: clamp(0.95rem, 2vmin, 1.2rem);
+}
+#root .gameFinale .winning-text,
+#root .gameFinale .winner-revel1,
+#root .gameFinale .winner-revel2 {
+  margin: 6px 0;
+  font-size: clamp(1.1rem, 2.5vmin, 1.6rem);
+}
+#root .gameFinale .winner-revel3 {
+  margin: 8px 0;
+  font-size: clamp(1.5rem, 3.5vmin, 2.3rem);
+}
+#root .gameFinale .finalePresentation .mainTeamContainer {
+  min-width: 0;
+  gap: 10px;
+  margin: 0;
+}
+#root .gameFinale .teamContainer {
+  min-width: min(190px, 100%);
+  flex: 1 1 190px;
+}
+#root .gameFinale .teamText {
+  font-size: clamp(1rem, 2vmin, 1.3rem);
+}
+#root .gameFinale .team-table {
+  min-height: 120px;
+  padding: 8px;
+}
+#root .gameFinale .finalScoreBoard {
+  font-size: 1.6rem;
+}
+#root .gameFinale .player-table {
+  margin: 6px 0 0;
+}
+#root .finaleControls {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 4px;
+}
+#root .gameFinale .finaleControls .finaleAudio,
+#root .gameFinale .finaleControls .finaleLobby {
+  margin: 0;
+}
+#root .gameFinale .finaleControls .finaleLobby p {
+  margin: 4px;
+  font-size: 0.9rem;
+}
+#root .finaleControls .finaleLobby {
+  flex: 0 1 310px;
+  min-width: 0;
+  max-width: 100%;
+}
+#root .finaleControls .cta .skewSpan:first-child {
+  white-space: nowrap;
+}
+#root .finaleControls .cta:hover .skewSpan:nth-child(2) {
+  margin-right: 0;
+}
+@media (max-height: 700px) {
+  #root .countdownWell {
+    grid-template-rows: 48px auto 4px;
+    gap: 2px;
+  }
+  #root .countdownDisplay {
+    height: 48px;
+  }
+  #root .countdown {
+    font-size: 1.7rem;
+  }
+  #root .countdownTrack {
+    height: 4px;
+  }
+  #root .answerColumn {
+    gap: 6px;
+  }
+}
+@media (max-width: 760px) {
+  #root .answerColumn {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+}
+@media (max-width: 650px) {
+  #root .mainHeader {
+    padding-inline: 6px;
+    gap: 4px;
+  }
+  #root .activityLeave {
+    max-width: 90px;
+  }
+  #root .finalePresentation {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+  #root .answerList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

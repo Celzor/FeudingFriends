@@ -62,7 +62,7 @@ function QuestionConfirm({ lightning = false }: { lightning?: boolean }) {
   if (!confirmingQuestion) return <div>Loading question… <button onClick={onCancel}>Try again</button></div>;
 
   return (
-    <div>
+    <div className="questionConfirm">
       <h2 className="flashAttention">Select Your Question</h2>
 
       <b className="questionText">{confirmingQuestion.question}</b>
@@ -117,7 +117,7 @@ export default function GameView() {
 
   if (lobbyData.gameState === "lightning_round" || lobbyData.gameState === "lightning_reveal") {
     return (
-      <div>
+      <div className="lightningStage">
         <h1>Lightning Round</h1>
         <div className="renderQuestion">
           <RenderLightningQuestion />
@@ -145,12 +145,13 @@ export default function GameView() {
 
     return (
       <div className="mainGameQuestion">
-        <h1>
-          Round {lobbyData.currentRound + 1}
-
-        </h1>
-        <Countdown />
-        <h3 className="currentTeamGuessing">{gameStatusText}</h3>
+        <div className="roundStatus">
+          <div className="roundHeading">
+            <h1>Round {lobbyData.currentRound + 1}</h1>
+            <h3 className="currentTeamGuessing">{gameStatusText}</h3>
+          </div>
+          <Countdown />
+        </div>
 
         <div className="renderQuestion">
           <RenderQuestion />

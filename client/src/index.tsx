@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import "./scss/App.scss";
 import "./scss/polish.scss";
+import "./scss/viewport.scss";
 import "@fontsource/acme/400.css";
 import "@fontsource/poppins/900-italic.css";
 // Pages hosts a Refract activity. A direct visit must not start the web game's socket.
