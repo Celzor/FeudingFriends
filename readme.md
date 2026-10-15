@@ -112,7 +112,9 @@ The game uses the available desktop width. Answer boards have two balanced colum
 
 On the last configured main round, every team gets a **FINAL ROUND — MAKE IT COUNT!** banner. The active team's banner highlights its turn; lightning rounds and earlier main rounds do not show the warning.
 
-Original sound effects and victory music preload and decode once in the lobby. Playback skips silence at the start of the clips, and answer/strike animations start with their sound. Sounds that cannot play immediately are skipped instead of arriving late. Round wins get fireworks and confetti; the final podium adds more fireworks, floating trophies, a spotlight and the original victory music. A browser that blocks music offers a play button, and music stops when the results screen closes. Reduced-motion preferences disable the animated overlays.
+Original sound effects and victory music preload and decode once in the lobby. Short sound effects skip leading silence, and answer/strike animations start with their sound. Effects that cannot play immediately are skipped instead of arriving late. Round wins get fireworks and confetti; the final podium adds more fireworks, floating trophies, a spotlight and the original victory music. A browser that blocks music offers a play button, and music stops when the results screen closes. Reduced-motion preferences disable the animated overlays.
+
+The victory track retains its complete intro and original reveal sequence: the score builds at 5–6 seconds, the winner appears across the final fanfare at 7–8 seconds, and standings follow at 8.5 seconds. This sequence starts with actual music playback, including after an autoplay retry; reduced motion removes the spin without revealing the winner early. If music cannot play, **Continue without music** runs the same buildup silently.
 
 ## Question data
 

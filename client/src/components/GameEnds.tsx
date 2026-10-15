@@ -8,6 +8,7 @@ export default function GameEnds() {
   const { playGameOver, retryGameOver, stopGameOver, gameOverMusicState } =
     useGameSounds();
   const [celebrationRun, setCelebrationRun] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
   useEffect(() => {
     playGameOver();
     return stopGameOver;
@@ -16,6 +17,9 @@ export default function GameEnds() {
     if (gameOverMusicState.status === "playing") {
       // A slow download or an autoplay retry should still get the full entrance.
       setCelebrationRun((run) => run + 1);
+      setHasStarted(true);
+    } else if (gameOverMusicState.status === "loading") {
+      setHasStarted(false);
     }
   }, [gameOverMusicState.status]);
 
@@ -34,7 +38,11 @@ export default function GameEnds() {
 
   return (
     <section className="gameFinale" aria-label="Game results">
-      <div key={celebrationRun} data-celebration-run={celebrationRun}>
+      <div
+        key={celebrationRun}
+        data-celebration-run={celebrationRun}
+        data-finale-started={hasStarted}
+      >
         <Celebration intensity="finale" />
         <div className="finaleTrophy" aria-hidden="true">
           🏆
@@ -96,6 +104,19 @@ export default function GameEnds() {
             {status === "ended"
               ? "Play the victory music again!"
               : "Play celebration music"}
+          </button>
+        )}
+        {!hasStarted && (status === "blocked" || status === "error") && (
+          <button
+            type="button"
+            data-game-audio-control
+            onClick={() => {
+              stopGameOver();
+              setCelebrationRun((run) => run + 1);
+              setHasStarted(true);
+            }}
+          >
+            Continue without music
           </button>
         )}
       </div>
