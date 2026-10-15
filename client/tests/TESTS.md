@@ -9,3 +9,5 @@ Run `npm run test:pages` from the repository root to build the production Refrac
 The relay checks the integration contract locally. A real call in the deployed Refract application remains a manual deployment check.
 
 The referee's isolated permission, timer and scoring tests run with `npm test` from the root.
+
+The multiplayer flow also checks the two-column desktop board and stacked boards at 760px and 390px, countdown containment, and page overflow. It checks actual decoded audio readiness, sound/answer-animation timing, original victory-music playback and stop, and celebration overlays. Desktop/mobile round and finale screenshots are saved in `client/output/`.

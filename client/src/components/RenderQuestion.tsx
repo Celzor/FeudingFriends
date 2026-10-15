@@ -4,7 +4,8 @@ import { IAnswerType, IQuestionType } from "../../../types";
 
 import { DataContext } from "../providers/DataProvider";
 
-import { AnswerButton, WrongAnswerButton } from "./AnswerButtons";
+import { WrongAnswerButton } from "./AnswerButtons";
+import AnswerBoard from "./AnswerBoard";
 
 import "../scss/buttonAnimation.scss";
 
@@ -25,19 +26,13 @@ export default function RenderQuestion({ roundEnd = false }) {
   return (
     <div>
       <div className="questionTitle">{displayQuestion.question}</div>
-      <div className="answerButtonContainer">
-        {displayQuestion.answers.map((answer: IAnswerType, index: number) => {
-          return (
-            <AnswerButton
-              key={index}
-              answer={answer}
-              onClick={async () => isLobbyHost && answerQuestion(answer)}
-              index={index}
-              roundEnd={roundEnd}
-            />
-          );
-        })}
-      </div>
+      <AnswerBoard
+        answers={displayQuestion.answers}
+        onAnswer={(answer) => {
+          if (isLobbyHost) void answerQuestion(answer);
+        }}
+        roundEnd={roundEnd}
+      />
       {isLobbyHost && !roundEnd && (
         <WrongAnswerButton
           onClick={() => answerQuestion(false)}

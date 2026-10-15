@@ -108,6 +108,12 @@ Main rounds finish when at least 60% of answers have been selected (rounded up),
 
 The purple stage, yellow trims, chunky buttons, original sounds and scoreboards remain. Layouts now fit mobile screens, inputs have readable contrast and labels, keyboard focus is visible, fonts load locally, and reduced-motion preferences are respected.
 
+The game uses the available desktop width. Answer boards have two balanced columns, numbered down the left and then the right; screens at 760px or narrower stack them into one column. The countdown reserves space for its growing digits so it stays centered and clear of headings and labels.
+
+On the last configured main round, every team gets a **FINAL ROUND — MAKE IT COUNT!** banner. The active team's banner highlights its turn; lightning rounds and earlier main rounds do not show the warning.
+
+Original sound effects and victory music preload and decode once in the lobby. Playback skips silence at the start of the clips, and answer/strike animations start with their sound. Sounds that cannot play immediately are skipped instead of arriving late. Round wins get fireworks and confetti; the final podium adds more fireworks, floating trophies, a spotlight and the original victory music. A browser that blocks music offers a play button, and music stops when the results screen closes. Reduced-motion preferences disable the animated overlays.
+
 ## Question data
 
 See [question sources and review](server/data/SOURCES.md) for the cleaned bank, correction rules, and upstream import status. `npm run generate` creates the Refract copy from the same CSVs the server reads. `npm test` validates all boards and confirms that both versions match. Fast Money gameplay is excluded.

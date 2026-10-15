@@ -3,8 +3,10 @@ import { DataContextProvider } from "./providers/DataProvider";
 
 import Game from "./pages/Game";
 import { isRefract, socket } from "./socket";
+import { useGameAudioPreload } from "./hooks/useGameSounds";
 
 export default function App() {
+  useGameAudioPreload();
   return (
     <DataContextProvider>
       <div className="mainContainer">

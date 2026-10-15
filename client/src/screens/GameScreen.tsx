@@ -12,7 +12,7 @@ import GameView from "../components/GameView";
 
 // game in progress, orcherstrate rounds
 
-//add a table for each of the teams, above the winner team write Congratulations, show all the players names for the winning team, and above the losing team , show their score, all the player names 
+//add a table for each of the teams, above the winner team write Congratulations, show all the players names for the winning team, and above the losing team , show their score, all the player names
 export default function GameScreen() {
   const { isLobbyHost, playerName, lobbyData } = useContext(DataContext);
 
@@ -22,13 +22,12 @@ export default function GameScreen() {
         <h2>Game ID: {lobbyData.lobbyCode}</h2>
         <p>{isLobbyHost ? "You are the host" : "You are " + playerName}</p>
       </div>
-   <div className="header-info"></div>
-   
-     
+
       <hr />
       <GameView />
-      {lobbyData.gameState != "game_end" && <hr />}  
-      {lobbyData.gameState != "game_end" && lobbyData.gameState != "game_over" && <TeamsView />}      
+      {lobbyData.gameState != "game_end" && <hr />}
+      {lobbyData.gameState != "game_end" &&
+        lobbyData.gameState != "game_over" && <TeamsView />}
     </div>
   );
 }

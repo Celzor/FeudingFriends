@@ -1,0 +1,257 @@
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: clip;
+  pointer-events: none;
+  contain: strict;
+}
+
+.celebrationSpotlight {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 170vmax;
+  height: 170vmax;
+  margin: -85vmax;
+  opacity: 0.09;
+  background: repeating-conic-gradient(
+    from 0deg,
+    #ffe548 0deg 10deg,
+    transparent 10deg 30deg
+  );
+  animation: celebrationSpotlightTurn 42s linear infinite;
+}
+
+.celebrationFirework {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  color: var(--party-color);
+  i {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 7px 2px currentColor;
+    opacity: 0;
+    animation: celebrationBurst 3.2s ease-out infinite;
+    animation-delay: var(--burst-delay);
+  }
+}
+
+.celebrationConfetti {
+  position: absolute;
+  top: -24px;
+  width: 9px;
+  height: 16px;
+  animation: celebrationConfettiFall var(--fall-duration) var(--fall-delay)
+    linear infinite;
+}
+.celebrationFloater {
+  position: absolute;
+  bottom: -5rem;
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  filter: drop-shadow(2px 3px 0 #392347);
+  animation: celebrationTrophyFloat 8s var(--float-delay) linear infinite;
+}
+
+@keyframes celebrationBurst {
+  0%,
+  8% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.15);
+  }
+  12% {
+    opacity: 1;
+  }
+  65%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--spark-x), calc(var(--spark-y) + 6vmin))
+      scale(0.15);
+  }
+}
+@keyframes celebrationConfettiFall {
+  from {
+    transform: translate(0, -3vh) rotate(0);
+  }
+  to {
+    transform: translate(var(--confetti-drift), 110vh)
+      rotate(var(--confetti-turn));
+  }
+}
+@keyframes celebrationTrophyFloat {
+  from {
+    transform: translateY(0) rotate(-12deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(-120vh) rotate(18deg);
+    opacity: 0;
+  }
+}
+@keyframes celebrationSpotlightTurn {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gameFinale {
+  position: relative;
+  isolation: isolate;
+  text-align: center;
+  padding-block: clamp(16px, 4vw, 32px);
+  overflow-wrap: anywhere;
+}
+.gameFinale .finaleTrophy {
+  font-size: clamp(4rem, 12vw, 7rem);
+  line-height: 1.3;
+  filter: drop-shadow(4px 5px 0 #392347);
+  animation: finaleTrophyBounce 1.3s ease-in-out infinite alternate;
+}
+.gameFinale .finaleRibbon {
+  display: inline-block;
+  padding: 8px 24px;
+  margin-bottom: 18px;
+  color: #2c1b3c;
+  background: #ffe548;
+  border: 3px solid #fff5c2;
+  border-radius: 4px;
+  box-shadow: 5px 5px 0 #392347;
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+  letter-spacing: 0.1em;
+  transform: rotate(-3deg);
+}
+.gameFinale .winning-text,
+.gameFinale .winner-revel1,
+.gameFinale .winner-revel2,
+.gameFinale .winner-revel3 {
+  font-size: clamp(1.7rem, 5vw, 3rem);
+  line-height: 1.3;
+  margin: 12px auto;
+  animation: finaleReveal 0.65s both;
+}
+.gameFinale .winner-revel1 {
+  animation-delay: 0.3s;
+}
+.gameFinale .winner-revel2 {
+  animation-delay: 0.7s;
+}
+.gameFinale .winner-revel3 {
+  animation-delay: 1s;
+  color: #ffe548;
+  text-shadow: 3px 4px 0 #392347;
+}
+#root .gameFinale .mainTeamContainer {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: stretch;
+  margin-top: 24px;
+  animation: finaleReveal 0.65s 1.3s both;
+}
+#root .gameFinale .teamContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 260px;
+  max-width: 500px;
+}
+.gameFinale .teamText {
+  width: auto;
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+}
+.gameFinale .team-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 160px;
+  padding: 16px;
+  border: 2px solid #d5a0ff;
+  background: #392347;
+}
+.gameFinale .finalScoreBoard {
+  padding: 6px 12px;
+  margin-top: 8px;
+  font-family: seven, monospace;
+  font-size: 2rem;
+  color: #ffe548;
+  background: #171119;
+  border: 2px solid #ffe548;
+  border-radius: 5px;
+  font-variant-numeric: tabular-nums;
+}
+.gameFinale .player-table {
+  padding: 0;
+  list-style: none;
+}
+.gameFinale .runnerUpText {
+  color: #e5d5f2;
+}
+.gameFinale .finaleAudio {
+  margin-top: 20px;
+  font-size: 1rem;
+}
+.gameFinale .finaleAudio button {
+  padding: 8px 16px;
+  border: 2px solid #ffe548;
+  background: #392347;
+  color: #fff5c2;
+  border-radius: 8px;
+}
+.gameFinale .finaleAudio p {
+  margin: 8px 0;
+}
+
+@keyframes finaleTrophyBounce {
+  from {
+    transform: rotate(-8deg) translateY(0);
+  }
+  to {
+    transform: rotate(8deg) translateY(-6px);
+  }
+}
+@keyframes finaleReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 650px) {
+  .celebrationConfetti:nth-child(2n),
+  .celebrationFirework:nth-child(2n) {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .celebration {
+    display: none;
+  }
+  .gameFinale .finaleTrophy,
+  .gameFinale .winning-text,
+  .gameFinale .winner-revel1,
+  .gameFinale .winner-revel2,
+  .gameFinale .winner-revel3,
+  #root .gameFinale .mainTeamContainer {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

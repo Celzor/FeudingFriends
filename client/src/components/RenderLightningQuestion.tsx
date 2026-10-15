@@ -1,8 +1,11 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { DataContext } from "../providers/DataProvider";
-import { AnswerButton, WrongAnswerButton } from "./AnswerButtons";
+import { WrongAnswerButton } from "./AnswerButtons";
+import AnswerBoard from "./AnswerBoard";
 import LightningChallenge from "./LightningChallenge";
 import Countdown from "./Countdown";
+import Celebration from "./Celebration";
+import useGameSounds from "../hooks/useGameSounds";
 export default function RenderLightningQuestion() {
   const {
     lobbyData,
@@ -14,10 +17,20 @@ export default function RenderLightningQuestion() {
   const reveal = lobbyData.gameState === "lightning_reveal";
   const question = lobbyData.lightningQuestion;
   const team = lobbyData.teams[lobbyData.lightningRoundTeamIndex];
+  const correct = question?.answers.some((a) => a.answerSelected);
+  const { playApplause, playWrong } = useGameSounds();
+  const celebrated = useRef(false);
+  const [celebrating, setCelebrating] = useState(false);
+  useEffect(() => {
+    if (!reveal || celebrated.current) return;
+    celebrated.current = true;
+    if (correct) playApplause({ onStart: () => setCelebrating(true) });
+    else playWrong();
+  }, [reveal]);
   if (!question) return <p>Waiting for a question…</p>;
-  const correct = question.answers.some((a) => a.answerSelected);
   return (
     <div>
+      {celebrating && <Celebration intensity="round" />}
       <div className="questionTitle">{question.question}</div>
       {reveal ? (
         <section
@@ -34,17 +47,11 @@ export default function RenderLightningQuestion() {
               ? "The lightning answers are…"
               : "The host can now move on to the main game."}
           </p>
-          <div className="answerButtonContainer">
-            {question.answers.map((answer, index) => (
-              <AnswerButton
-                key={index}
-                answer={answer}
-                index={index}
-                roundEnd
-                onClick={() => {}}
-              />
-            ))}
-          </div>
+          <AnswerBoard
+            answers={question.answers}
+            roundEnd
+            onAnswer={() => {}}
+          />
           {isLobbyHost ? (
             <button className="startButton" onClick={continueLightning}>
               Continue to main game
@@ -78,19 +85,12 @@ export default function RenderLightningQuestion() {
                   : "buzzed in!"}
               </h2>
               <Countdown />
-              <div className="answerButtonContainer">
-                {question.answers.map((answer, index) => (
-                  <AnswerButton
-                    key={index}
-                    answer={answer}
-                    index={index}
-                    roundEnd={false}
-                    onClick={() => {
-                      if (isLobbyHost) void answerLightningQuestion(answer);
-                    }}
-                  />
-                ))}
-              </div>
+              <AnswerBoard
+                answers={question.answers}
+                onAnswer={(answer) => {
+                  if (isLobbyHost) void answerLightningQuestion(answer);
+                }}
+              />
               {isLobbyHost && (
                 <WrongAnswerButton
                   onClick={() => answerLightningQuestion(false)}
