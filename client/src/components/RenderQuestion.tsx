@@ -24,7 +24,7 @@ export default function RenderQuestion({ roundEnd = false }) {
   }
 
   return (
-    <div>
+    <div className="questionPanel">
       <div className="questionTitle">{displayQuestion.question}</div>
       <AnswerBoard
         answers={displayQuestion.answers}
@@ -39,8 +39,6 @@ export default function RenderQuestion({ roundEnd = false }) {
           roundEnd={roundEnd}
         />
       )}
-
-      <br />
     </div>
   );
 }

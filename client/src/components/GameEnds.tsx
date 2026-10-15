@@ -40,21 +40,24 @@ export default function GameEnds() {
   return (
     <section className="gameFinale" aria-label="Game results">
       <div
+        className="finalePresentation"
         key={celebrationRun}
         data-celebration-run={celebrationRun}
         data-finale-started={hasStarted}
       >
         <Celebration intensity="finale" />
-        <div className="finaleTrophy" aria-hidden="true">
-          🏆
+        <div className="finaleAnnouncement">
+          <div className="finaleTrophy" aria-hidden="true">
+            🏆
+          </div>
+          <div className="finaleRibbon">★ FEUD CHAMPIONS ★</div>
+          <div className="winning-text">The winning team is....</div>
+          <div className="winner-revel1">with a score of!</div>
+          <div className="winner-revel2">
+            <span style={{ color: "#ffe548" }}>{highestScore}</span> POINTS!!!
+          </div>
+          <div className="winner-revel3">{winningTeam} 🎉</div>
         </div>
-        <div className="finaleRibbon">★ FEUD CHAMPIONS ★</div>
-        <div className="winning-text">The winning team is....</div>
-        <div className="winner-revel1">with a score of!</div>
-        <div className="winner-revel2">
-          <span style={{ color: "#ffe548" }}>{highestScore}</span> POINTS!!!
-        </div>
-        <div className="winner-revel3">{winningTeam} 🎉</div>
         <div className="mainTeamContainer">
           {sortedTeams.map((team) => (
             <div className="teamContainer" key={team.teamId}>
@@ -84,59 +87,61 @@ export default function GameEnds() {
           ))}
         </div>
       </div>
-      <div className="finaleAudio" data-music-status={status}>
-        {status === "loading" && (
-          <p role="status">Cueing the celebration music…</p>
-        )}
-        {status === "blocked" && (
-          <p role="status">Tap below to start the celebration music.</p>
-        )}
-        {status === "error" && (
-          <p role="status">
-            Celebration music could not play. {gameOverMusicState.error}
-          </p>
-        )}
-        {status === "playing" ? (
-          <button
-            key="stop"
-            type="button"
-            data-game-audio-control
-            onClick={stopGameOver}
-          >
-            Stop celebration music
-          </button>
-        ) : (
-          <button
-            key="play"
-            type="button"
-            data-game-audio-control
-            onClick={retryGameOver}
-          >
-            {status === "ended"
-              ? "Play the victory music again!"
-              : "Play celebration music"}
-          </button>
-        )}
-        {!hasStarted && (status === "blocked" || status === "error") && (
-          <button
-            type="button"
-            data-game-audio-control
-            onClick={() => {
-              stopGameOver();
-              setCelebrationRun((run) => run + 1);
-              setHasStarted(true);
-            }}
-          >
-            Continue without music
-          </button>
-        )}
-      </div>
-      <div className="finaleLobby">
-        {isLobbyHost ? (
-          <LoadingButton buttonText="Back to lobby" onClick={returnToLobby} />
-        ) : (
-          <p>Ready for a rematch? Your host can take everyone back to the lobby.</p>
-        )}
+      <div className="finaleControls">
+        <div className="finaleAudio" data-music-status={status}>
+          {status === "loading" && (
+            <p role="status">Cueing the celebration music…</p>
+          )}
+          {status === "blocked" && (
+            <p role="status">Tap below to start the celebration music.</p>
+          )}
+          {status === "error" && (
+            <p role="status">
+              Celebration music could not play. {gameOverMusicState.error}
+            </p>
+          )}
+          {status === "playing" ? (
+            <button
+              key="stop"
+              type="button"
+              data-game-audio-control
+              onClick={stopGameOver}
+            >
+              Stop celebration music
+            </button>
+          ) : (
+            <button
+              key="play"
+              type="button"
+              data-game-audio-control
+              onClick={retryGameOver}
+            >
+              {status === "ended"
+                ? "Play the victory music again!"
+                : "Play celebration music"}
+            </button>
+          )}
+          {!hasStarted && (status === "blocked" || status === "error") && (
+            <button
+              type="button"
+              data-game-audio-control
+              onClick={() => {
+                stopGameOver();
+                setCelebrationRun((run) => run + 1);
+                setHasStarted(true);
+              }}
+            >
+              Continue without music
+            </button>
+          )}
+        </div>
+        <div className="finaleLobby">
+          {isLobbyHost ? (
+            <LoadingButton buttonText="Back to lobby" onClick={returnToLobby} />
+          ) : (
+            <p>Ready for a rematch? Your host can take everyone back to the lobby.</p>
+          )}
+        </div>
       </div>
     </section>
   );

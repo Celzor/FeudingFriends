@@ -24,9 +24,21 @@ test("Refract parent relay synchronizes host and players without a backend socke
       const frame = document.createElement("iframe");
       frame.name = `participant-${person.id}`;
       frame.src = new URL("./", location.href).href;
-      frame.style.width = "500px";
-      frame.style.height = "850px";
+      Object.assign(frame.style, {
+        position: "absolute",
+        inset: "0",
+        width: "100%",
+        height: "100%",
+        border: "0",
+        zIndex: person.id === 1 ? "2" : "1",
+        pointerEvents: person.id === 1 ? "auto" : "none",
+      });
       return { person, frame };
+    });
+    Object.assign(document.body.style, {
+      margin: "0",
+      padding: "0",
+      height: "100dvh",
     });
     document.body.replaceChildren(...clients.map((c) => c.frame));
     const post = (c: (typeof clients)[number], data: any) =>

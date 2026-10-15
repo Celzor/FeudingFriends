@@ -47,12 +47,11 @@ export default function RoundEndStats() {
   }, [lobbyData.roundResults]);
 
   return (
-    <div>
+    <div className="roundEndStats">
       {celebrating && <Celebration intensity="round" />}
       Round Ended
       <h2>{roundResult}</h2>
       <RenderQuestion roundEnd={true} />
-      <br />
       {isLobbyHost &&
         (lobbyData.gameState === "game_end" ? (
           <LoadingButton onClick={() => hostEndGame()} buttonText="End Game" />

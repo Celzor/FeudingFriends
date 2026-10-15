@@ -1,11 +1,6 @@
 import React, { useEffect, useContext, useState, useMemo } from "react";
 
-import {
-  IAnswerType,
-  IPlayerData,
-  IQuestionType,
-  ITeamData,
-} from "../../../types";
+import { IPlayerData } from "../../../types";
 
 import { DataContext } from "../providers/DataProvider";
 
@@ -39,8 +34,6 @@ function LobbyConfig() {
   const updateQuestionPools = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const options = [...event.target.selectedOptions];
     const values = options.map((option) => Number(option.value));
-    console.log(values);
-
     setQuestionPools(values);
     hostUpdateLobbyConfig({
       ...lobbyData.config,
@@ -84,13 +77,14 @@ function LobbyConfig() {
     <div className="lobbyMain">
       <h2>Lobby Config</h2>
       <div className="lobbyConfig">
-        <div className="questionSet" key={"test"}>
+        <div className="questionSet">
           <label htmlFor="questionPools">Question Sets</label>
           <select
             className="questionPools"
             name="questionPools"
             id="questionPools"
             multiple
+            size={6}
             disabled={!isLobbyHost}
             onChange={updateQuestionPools}
             value={questionPools.map(String)} // Convert numbers to strings
@@ -103,7 +97,7 @@ function LobbyConfig() {
           </select>
         </div>
         <div className="winConditions">
-          <div key={"test1"}>
+          <div className="lobbySetting">
             <label htmlFor="rounds">Round Count</label>
             <input
               className="playerInput"
@@ -116,7 +110,8 @@ function LobbyConfig() {
               onChange={updateRounds}
               disabled={!isLobbyHost}
             />
-
+          </div>
+          <div className="lobbySetting">
             <label htmlFor="roundTimer">Seconds per answer (0 = off)</label>
             <input
               className="playerInput"
@@ -130,7 +125,7 @@ function LobbyConfig() {
               disabled={!isLobbyHost}
             />
           </div>
-          <div className="LightningRound">
+          <div className="lobbySetting LightningRound">
             <label htmlFor="lightningRound">Lightning Round</label>
             <input
               className="playerInput"
@@ -142,7 +137,7 @@ function LobbyConfig() {
               disabled={!isLobbyHost}
             />
           </div>
-          <div key={"test2"}>
+          <div className="lobbySetting">
             <label htmlFor="score">Winning Score</label>
             <input
               className="playerInput"
@@ -221,12 +216,7 @@ export default function LobbyScreen() {
     if (!teamsData || !lobbyData) return null;
 
     return teamsData.map((team, index) => (
-      <div
-        key={index}
-        style={{
-          flex: 1,
-        }}
-      >
+      <div className="lobbyTeam" key={team.teamId}>
         <strong>{team.teamName}</strong>
 
         <ul>
@@ -241,11 +231,17 @@ export default function LobbyScreen() {
   }, [teamsData, lobbyData]);
 
   return (
-    <div>
-      {/* game id */}
-      <div className="lineHeightReduce">
-        <h1>
-          Game ID: {lobbyData.lobbyCode}
+    <div className="lobbyScreen">
+      <div className="lineHeightReduce lobbyIdentity">
+        <div className="lobbyIdentityDetails">
+          <h1>Game ID: {lobbyData.lobbyCode}</h1>
+          <p className="hostDetails">
+            {isLobbyHost ? "You are the host" : "You are " + playerName}
+          </p>
+          {!isLobbyHost && <p>Host: {lobbyData.hostName}</p>}
+        </div>
+        <div className="lobbyJoinDetails">
+          {isRefract && <p>Everyone in the call joins automatically.</p>}
           <button
             hidden={isRefract}
             className="copyButton"
@@ -274,44 +270,27 @@ export default function LobbyScreen() {
           >
             {isCopiedLink ? "Copied Join Link ✅" : "Copy Join Link"}
           </button>
-        </h1>
-
-        <p className="hostDetails">
-          {isLobbyHost ? "You are the host" : "You are " + playerName}
-        </p>
-        {playerName !== lobbyData.hostName && <p>Host: {lobbyData.hostName}</p>}
-      </div>
-
-      <hr />
-
-      {isRefract && <p>Everyone in the call joins automatically.</p>}
-
-      {/* lobby config */}
-      <div className="lobbyTopContainer">
-        <LobbyConfig />
-        <PlayersInLobby />
-      </div>
-
-      <hr />
-
-      {/* teams display */}
-      <div className="teamsBottomLobbyContainer">
-        <p>Teams:</p>
-        <div
-          style={{
-            display: "flex",
-            flex: 1,
-            flexDirection: "row",
-            width: "100%",
-          }}
-        >
-          {teamsView}
         </div>
       </div>
 
-      {isLobbyHost ? (
-        <LoadingButton onClick={() => startGame()} buttonText="BEGIN" />
-      ) : null}
+      <div className="lobbyContent">
+        <div className="lobbyTopContainer">
+          <LobbyConfig />
+          <PlayersInLobby />
+        </div>
+      </div>
+
+      <div className="lobbyFooter">
+        <div className="teamsBottomLobbyContainer">
+          <p>Teams:</p>
+          <div className="lobbyTeams">{teamsView}</div>
+        </div>
+        {isLobbyHost ? (
+          <LoadingButton onClick={() => startGame()} buttonText="BEGIN" />
+        ) : (
+          <p className="lobbyWaiting">Waiting for the host to begin…</p>
+        )}
+      </div>
     </div>
   );
 }

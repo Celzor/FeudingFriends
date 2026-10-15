@@ -47,7 +47,7 @@ async function expectRoundLayout(page: Page, stacked: boolean) {
       timer: box("[data-testid=countdown]"),
       display: box(".countdownDisplay"),
       well: box(".countdownWell"),
-      heading: box("h1"),
+      heading: box(".roundHeading"),
       label: box(".countdownLabel"),
       team: box(".currentTeamGuessing"),
       question: box(".questionTitle"),
@@ -71,9 +71,11 @@ async function expectRoundLayout(page: Page, stacked: boolean) {
     expect(layout.timer.top).toBeGreaterThanOrEqual(container.top - 1);
     expect(layout.timer.bottom).toBeLessThanOrEqual(container.bottom + 1);
   }
-  expect(layout.heading.bottom).toBeLessThanOrEqual(layout.well.top + 1);
+  expect(layout.heading.right).toBeLessThanOrEqual(layout.well.left + 1);
+  expect(layout.heading.top).toBeLessThan(layout.well.bottom);
+  expect(layout.well.top).toBeLessThan(layout.heading.bottom);
   expect(layout.timer.bottom).toBeLessThanOrEqual(layout.label.top + 1);
-  expect(layout.well.bottom).toBeLessThanOrEqual(layout.team.top + 1);
+  expect(layout.well.bottom).toBeLessThanOrEqual(layout.question.top + 1);
   expect(layout.team.bottom).toBeLessThanOrEqual(layout.question.top + 1);
 
   if (stacked) {

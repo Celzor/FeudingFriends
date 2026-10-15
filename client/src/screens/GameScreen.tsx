@@ -17,17 +17,18 @@ export default function GameScreen() {
   const { isLobbyHost, playerName, lobbyData } = useContext(DataContext);
 
   return (
-    <div className="gameHeader">
+    <div className="gameHeader" data-game-state={lobbyData.gameState}>
       <div className="header-info">
         <h2>Game ID: {lobbyData.lobbyCode}</h2>
         <p>{isLobbyHost ? "You are the host" : "You are " + playerName}</p>
       </div>
 
       <hr />
-      <GameView />
-      {lobbyData.gameState != "game_end" && <hr />}
+      <div className="gameContent">
+        <GameView />
+      </div>
       {lobbyData.gameState != "game_end" &&
-        lobbyData.gameState != "game_over" && <TeamsView />}
+        lobbyData.gameState != "game_over" && <><hr /><TeamsView /></>}
     </div>
   );
 }
