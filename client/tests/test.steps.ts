@@ -16,7 +16,7 @@ export async function createHostlobby(hostPage: any) {
 
       // check titile
       const title = await hostPage.title();
-      expect(title).toBe("Fueding Friends");
+      expect(title).toBe("Feuding Friends");
 
       await takeScreenshot(hostPage, "startup");
 

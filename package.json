@@ -13,9 +13,11 @@
     "generate": "node scripts/questions.mjs",
     "dev": "npm run generate && concurrently -k -n server,client \"npm run dev -w server\" \"npm run dev -w client\"",
     "build": "npm run generate && npm run build -w client && npm run build -w server",
+    "build:pages": "npm run generate && npm run build:pages -w client",
     "typecheck": "npm run typecheck -w client && npm run typecheck -w server",
     "test": "npm run generate && tsx --test server/tests/*.test.ts",
     "test:e2e": "npm run generate && npm run test -w client",
+    "test:pages": "npm run build:pages && npm run test:pages -w client",
     "start": "npm run start -w server"
   },
   "devDependencies": {
