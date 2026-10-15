@@ -9,4 +9,3 @@ services:
     environment:
       PORT: "3010"
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
-      REFRACT_FRAME_ANCESTORS: ${REFRACT_FRAME_ANCESTORS:-'self'}

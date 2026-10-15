@@ -4,8 +4,16 @@ test("Refract parent relay synchronizes host and players without a backend socke
   page,
 }) => {
   const errors: string[] = [];
+  const backendRequests: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  page.on("request", (request) => {
+    if (request.url().includes("/socket.io/") && request.frame().parentFrame())
+      backendRequests.push(request.url());
+  });
+  await page.goto("./");
+  await expect(
+    page.getByRole("heading", { name: "Feuding Friends", exact: true }),
+  ).toBeVisible();
   await page.evaluate(() => {
     const people = [
       { id: 1, name: "Host", avatarUrl: null },
@@ -15,7 +23,7 @@ test("Refract parent relay synchronizes host and players without a backend socke
     const clients = people.map((person) => {
       const frame = document.createElement("iframe");
       frame.name = `participant-${person.id}`;
-      frame.src = "/";
+      frame.src = new URL("./", location.href).href;
       frame.style.width = "500px";
       frame.style.height = "850px";
       return { person, frame };
@@ -140,4 +148,5 @@ test("Refract parent relay synchronizes host and players without a backend socke
     one.getByRole("heading", { name: "Lobby Config" }),
   ).toBeVisible();
   expect(errors).toEqual([]);
+  expect(backendRequests).toEqual([]);
 });

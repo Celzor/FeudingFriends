@@ -1,6 +1,5 @@
-# Copy to docker-compose.override.yml and substitute your public HTTPS origins.
+# Optional: copy to docker-compose.override.yml and set your public HTTPS origin.
 services:
   app:
     environment:
       PUBLIC_ORIGIN: https://feud.example.com
-      REFRACT_FRAME_ANCESTORS: "'self' https://chat.example.com"
