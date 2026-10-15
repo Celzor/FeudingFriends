@@ -30,7 +30,17 @@ On a machine with an existing Chromium installation, set `PLAYWRIGHT_CHROMIUM_EX
 docker compose up -d --build
 ```
 
-The container serves the built client and Socket.IO together; the Compose port is **3011**. It runs compiled JavaScript as the unprivileged `node` user, includes a health check, and handles termination signals. Serve it behind an HTTPS reverse proxy with WebSocket upgrades enabled. Configure the public HTTPS origin using `PUBLIC_ORIGIN`; example values are in `.env.example` and `docker-compose.override.yml.example`.
+Run that command from the repository folder. Open **http://localhost:3011** on the server, or **http://YOUR-SERVER-IP:3011** from another device. Everyone joins through the same address. No `.env` file, database, or extra services are needed for direct hosting.
+
+To use another port, for example **8080**:
+
+```sh
+HOST_PORT=8080 docker compose up -d --build
+```
+
+For a permanent setting, copy `.env.example` to `.env` and set `HOST_PORT=8080`, then run the usual Compose command. Allow the chosen TCP port through the server's firewall. Use `docker compose logs -f app` to view logs and `docker compose down` to stop the game. To update after pulling new code, run `docker compose up -d --build` again.
+
+The container serves the built client and Socket.IO together and restarts automatically unless explicitly stopped. It runs compiled JavaScript as the unprivileged `node` user, includes a health check, and handles termination signals. For a public HTTPS address, place it behind a reverse proxy with WebSocket upgrades enabled and set `PUBLIC_ORIGIN=https://feud.example.com`. Example proxy and Refract settings are in `.env.example` and `docker-compose.override.yml.example`.
 
 For a direct image deployment:
 

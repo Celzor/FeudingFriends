@@ -1,11 +1,12 @@
 services:
   app:
+    image: feuding-friends:local
     build: .
     init: true
     restart: unless-stopped
     ports:
-      - "3011:3010"
+      - "${HOST_PORT:-3011}:3010"
     environment:
       PORT: "3010"
-      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:3011}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
       REFRACT_FRAME_ANCESTORS: ${REFRACT_FRAME_ANCESTORS:-'self'}
