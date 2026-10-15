@@ -93,6 +93,7 @@ test("every host action is refused to players and strangers; invalid messages do
     "choose_team_answer",
     "end_round",
     "end_game",
+    "return_to_lobby",
   ]) {
     assert.equal((await request("one", type)).type, "error", type);
     assert.equal((await request("stranger", type)).type, "error", type);
@@ -355,5 +356,164 @@ test("activity roster changes preserve play and late spectators cannot win the b
   assert.equal(
     (await request("one", "lightning_buzz_in", { challenge })).type,
     "lobby_update",
+  );
+});
+
+test("host can return a completed game to the same lobby and start a clean rematch", async (t) => {
+  t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: 100000 });
+  const { game, request, events, code } = await setup(t, true, 10);
+  let lobby = (await request("host", "sync_lobby")).data.lobby;
+  await request("host", "update_lobby_config", {
+    lobbyConfig: { ...lobby.config, numberOfRounds: 1, winningScore: 500 },
+  });
+  lobby = (
+    await request("host", "update_teams", {
+      teams: [
+        { teamId: 11, teamName: "The Champions" },
+        { teamId: 22, teamName: "The Challengers" },
+      ],
+      players: lobby.players.map((p: any) => ({
+        ...p,
+        teamId: p.teamId * 11,
+      })),
+    })
+  ).data.lobby;
+  const config = lobby.config;
+  assert.equal((await request("host", "return_to_lobby")).type, "error");
+
+  await request("host", "start_game");
+  await beginRound(request, true);
+  const started = (await request("host", "begin_lightning_buzzer")).data.lobby;
+  t.mock.timers.tick(6000);
+  const challenge = started.lightningChallenge;
+  const step =
+    challenge.mode === "reaction"
+      ? 0
+      : Math.floor(
+          (Date.now() - challenge.startedAt) /
+            (challenge.mode === "moles" ? 1100 : 900),
+        );
+  await request("one", "lightning_buzz_in", {
+    challenge: { step, target: challengeTarget(challenge.seed, step) },
+  });
+  await request("host", "choose_lightning_answer", {
+    answerChosen: lightning.answers[0],
+  });
+  await request("host", "continue_lightning");
+  await beginRound(request);
+  assert.equal((await request("host", "return_to_lobby")).type, "error");
+  for (const answer of regular.answers.slice(0, 4))
+    await request("host", "choose_team_answer", { answerChosen: answer });
+  assert.equal(
+    (await request("host", "sync_lobby")).data.lobby.gameState,
+    "game_end",
+  );
+  assert.equal((await request("host", "return_to_lobby")).type, "error");
+  await request("host", "end_game");
+
+  // A late Refract member remains a spectator rather than being reassigned by
+  // the rematch. A server disconnect keeps its normal reconnection grace period.
+  game.reconcileMembers(code, [
+    { id: "host", name: "Host" },
+    { id: "one", name: "One" },
+    { id: "two", name: "Two" },
+    { id: "stranger", name: "Spectator" },
+  ]);
+  const completed = (await request("host", "sync_lobby")).data.lobby;
+  assert.equal(completed.gameState, "game_over");
+  assert.equal(completed.teams[0].teamScore, 102);
+  assert.equal(completed.questions.length, 1);
+  assert.equal(completed.roundResults.length, 1);
+  assert.ok(completed.lightningQuestion.answers[0].answerSelected);
+  assert.equal((await request("one", "return_to_lobby")).type, "error");
+  assert.equal((await request("stranger", "return_to_lobby")).type, "error");
+  const reset = await request("host", "return_to_lobby", {
+    lobbyConfig: { numberOfRounds: 99 },
+    players: [],
+    teams: [{ teamId: 999, teamName: "Forged", teamScore: 999 }],
+    hostSocketId: "stranger",
+  });
+  assert.equal(reset.type, "lobby_update");
+  lobby = reset.data.lobby;
+  assert.equal(lobby.gameState, "lobby");
+  assert.equal(lobby.lobbyCode, code);
+  assert.equal(lobby.hostSocketId, completed.hostSocketId);
+  assert.equal(lobby.hostName, completed.hostName);
+  assert.deepEqual(lobby.config, config);
+  assert.deepEqual(lobby.players, completed.players);
+  assert.deepEqual(lobby.teams, [
+    { teamId: 11, teamName: "The Champions", teamScore: 0, wrongGuesses: 0 },
+    { teamId: 22, teamName: "The Challengers", teamScore: 0, wrongGuesses: 0 },
+  ]);
+  assert.equal(lobby.revision, completed.revision + 1);
+  assert.notEqual(lobby.randomSeed, completed.randomSeed);
+  assert.deepEqual(lobby.questions, []);
+  for (const field of [
+    "currentQuestion",
+    "lightningQuestion",
+    "lightningChallenge",
+    "lightningRoundStarted",
+    "lightningRoundTeamIndex",
+    "roundResults",
+    "currentRound",
+    "currentTeamIndex",
+    "suddenDeathTeamIndex",
+    "timerStart",
+  ])
+    assert.equal(lobby[field], undefined, field);
+  for (const id of ["host", "one", "two", "stranger"])
+    assert.deepEqual(events[id].at(-1).data.lobby, lobby, id);
+
+  assert.equal((await request("host", "return_to_lobby")).type, "error");
+  const eventCounts = Object.fromEntries(
+    Object.entries(events).map(([id, messages]) => [id, messages.length]),
+  );
+  t.mock.timers.tick(60000);
+  for (const [id, count] of Object.entries(eventCounts))
+    assert.equal(events[id].length, count, "old game timers must stay cancelled");
+  assert.deepEqual((await request("host", "sync_lobby")).data.lobby, lobby);
+
+  await request("host", "start_game");
+  assert.equal(
+    (
+      await request("host", "begin_lightning_round", {
+        question: completed.lightningQuestion,
+      })
+    ).type,
+    "error",
+    "a rematch requires a fresh referee question selection",
+  );
+  const freshLightning = await beginRound(request, true);
+  assert.equal(freshLightning.lightningRoundStarted, false);
+  assert.equal(freshLightning.lightningRoundTeamIndex, undefined);
+  assert.equal(freshLightning.lightningChallenge.startedAt, 0);
+  assert.ok(
+    freshLightning.lightningQuestion.answers.every(
+      (a: any) => !a.answerSelected,
+    ),
+  );
+});
+
+test("returning to the lobby preserves reconnect grace and removes departed players normally", async (t) => {
+  t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: 100000 });
+  const { game, request, sockets } = await setup(t, false, 10);
+  const initial = (await request("host", "sync_lobby")).data.lobby;
+  await request("host", "update_lobby_config", {
+    lobbyConfig: { ...initial.config, numberOfRounds: 1 },
+  });
+  await request("host", "start_game");
+  await beginRound(request);
+  for (const answer of regular.answers.slice(0, 4))
+    await request("host", "choose_team_answer", { answerChosen: answer });
+  await request("host", "end_game");
+  game.removeConnection(sockets.two);
+  const reset = (await request("host", "return_to_lobby")).data.lobby;
+  assert.deepEqual(reset.players, initial.players);
+  t.mock.timers.tick(119999);
+  assert.equal((await request("host", "sync_lobby")).data.lobby.players.length, 2);
+  t.mock.timers.tick(1);
+  assert.deepEqual(
+    (await request("host", "sync_lobby")).data.lobby.players,
+    initial.players.filter((p: any) => p.socketId !== "two"),
   );
 });

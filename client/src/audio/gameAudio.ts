@@ -85,8 +85,8 @@ function prepareSound(name: SoundName): Promise<PreparedSound> {
           `Could not load ${soundFiles[name]} (${response.status}).`,
         );
       const buffer = await audio.decodeAudioData(await response.arrayBuffer());
-      // The victory track is a timed reveal: retain its intro so the final
-      // fanfare still lands on the original seven-second winner cue.
+      // Keep the complete victory track so the finale can time its reveal
+      // from actual playback without trimming the musical buildup.
       const value = {
         buffer,
         offset: name === "endingMusic" ? 0 : audibleOffset(buffer),

@@ -209,6 +209,7 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
         teamBuzzIn: (challenge?: { step: number; target: number }) =>
           action("lightning_buzz_in", { challenge }),
         hostEndGame: () => action("end_game"),
+        returnToLobby: () => action("return_to_lobby"),
         answerQuestion: (answerChosen: IAnswerType | false) =>
           action("choose_team_answer", { answerChosen }),
         answerLightningQuestion: (answerChosen: IAnswerType | false) =>
@@ -255,6 +256,7 @@ type ContextValue = {
   startTheLightningBuzzer: () => Promise<void>;
   teamBuzzIn: (challenge?: { step: number; target: number }) => Promise<void>;
   hostEndGame: () => Promise<void>;
+  returnToLobby: () => Promise<void>;
   answerQuestion: (answer: IAnswerType | false) => Promise<void>;
   answerLightningQuestion: (answer: IAnswerType | false) => Promise<void>;
 };

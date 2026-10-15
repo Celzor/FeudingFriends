@@ -29,6 +29,7 @@ const hostActions: Record<string, string[]> = {
   choose_team_answer: ["round"],
   end_round: ["round_end"],
   end_game: ["game_end"],
+  return_to_lobby: ["game_over"],
 };
 const clone = <T>(v: T): T => structuredClone(v);
 const error = (message: string): IMessage => ({ type: "error", message });
@@ -291,7 +292,7 @@ export default class Game {
         return this.response(lobby, socket.id);
       }
       requireThat(typeof data.lobbyCode === "string", "Lobby code required.");
-      const lobby = this.lobbies.get(data.lobbyCode);
+      let lobby = this.lobbies.get(data.lobbyCode);
       requireThat(lobby, "Lobby not found.");
       if (type === "join_lobby") {
         requireThat(!data.fakeUser, "Test players are not supported.");
@@ -509,6 +510,29 @@ export default class Game {
           case "end_game":
             lobby.gameState = "game_over";
             break;
+          case "return_to_lobby": {
+            const code = lobby.lobbyCode;
+            clearTimeout(this.timers.get(code));
+            this.timers.delete(code);
+            this.pending.delete(code);
+            // Start from fresh defaults so no round, challenge or answer state
+            // survives. Identities and settings come only from the referee.
+            lobby = {
+              ...LobbyLogic.createLobby(lobby.hostSocketId, lobby.hostName),
+              lobbyCode: code,
+              revision: lobby.revision,
+              config: clone(lobby.config),
+              teams: lobby.teams.map(({ teamId, teamName }) => ({
+                teamId,
+                teamName,
+                teamScore: 0,
+                wrongGuesses: 0,
+              })),
+              players: clone(lobby.players),
+            };
+            this.lobbies.set(code, lobby);
+            break;
+          }
           default:
             return error("Unknown action.");
         }
