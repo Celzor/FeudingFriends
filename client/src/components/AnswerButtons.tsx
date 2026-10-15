@@ -1,4 +1,10 @@
-import React, { useEffect, useContext, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useContext,
+  useRef,
+  useState,
+} from "react";
 import ConfettiExplosion from "react-confetti-explosion";
 import "../scss/buttonAnimation.scss";
 import type { IAnswerType } from "../../../types";
@@ -38,29 +44,32 @@ export function AnswerButton({
 
   const { playRandomCorrectSound } = useGameSounds();
   const previouslySelected = useRef(Boolean(answer.answerSelected));
+  const soundSeed = useRef(lobbyData.randomSeed);
+
+  useLayoutEffect(() => {
+    // Start audio after the animated button and confetti have committed;
+    // generating the confetti before that commit can otherwise delay visuals.
+    if (isClicked) playRandomCorrectSound(soundSeed.current);
+  }, [isClicked]);
 
   useEffect(() => {
     const newlySelected = answer.answerSelected && !previouslySelected.current;
     previouslySelected.current = Boolean(answer.answerSelected);
     if (roundEnd || !newlySelected) return;
-    let timer: ReturnType<typeof setTimeout>;
-    playRandomCorrectSound(lobbyData.randomSeed, {
-      onStart: () => {
-        setIsExploding(
-          !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-        );
-        setAnimation(
-          animations[Math.floor(lobbyData.randomSeed * animations.length)] ||
-            animations[0],
-        );
-        setIsClicked(true);
-        timer = setTimeout(() => {
-          setAnimation("");
-          setIsClicked(false);
-          setIsExploding(false);
-        }, 1400);
-      },
-    });
+    soundSeed.current = lobbyData.randomSeed;
+    setIsExploding(
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    );
+    setAnimation(
+      animations[Math.floor(lobbyData.randomSeed * animations.length)] ||
+        animations[0],
+    );
+    setIsClicked(true);
+    const timer = setTimeout(() => {
+      setAnimation("");
+      setIsClicked(false);
+      setIsExploding(false);
+    }, 1400);
     return () => clearTimeout(timer);
   }, [answer.answerSelected, roundEnd]);
 

@@ -19,6 +19,34 @@ export default function Celebration({
       data-celebration={intensity}
     >
       {finale && <div className="celebrationSpotlight" />}
+      {finale && (
+        <div className="celebrationExplosion">
+          {Array.from({ length: 180 }, (_, piece) => {
+            // Two cannons send a full-screen volley across the winner reveal.
+            const fromLeft = piece % 2 === 0;
+            const distance = 18 + ((piece * 17) % 83);
+            const height = 32 + ((piece * 29) % 64);
+            return (
+              <i
+                className="celebrationExplosionParticle"
+                key={piece}
+                style={
+                  {
+                    left: fromLeft ? "0%" : "100%",
+                    backgroundColor: colors[piece % colors.length],
+                    borderRadius: piece % 4 === 0 ? "50%" : "1px",
+                    "--launch-x": `${fromLeft ? distance : -distance}vw`,
+                    "--launch-y": `${-height}vh`,
+                    "--launch-turn": `${piece % 2 ? "-" : ""}${540 + (piece % 7) * 180}deg`,
+                    "--launch-duration": `${3.8 + (piece % 11) * 0.16}s`,
+                    "--piece-width": `${7 + (piece % 5) * 2}px`,
+                  } as PartyStyle
+                }
+              />
+            );
+          })}
+        </div>
+      )}
       {Array.from({ length: burstCount }, (_, burst) => (
         <div
           className="celebrationFirework"

@@ -2,9 +2,10 @@ import { useEffect, useContext, useState } from "react";
 import { DataContext } from "../providers/DataProvider";
 import useGameSounds from "../hooks/useGameSounds";
 import Celebration from "./Celebration";
+import LoadingButton from "./LoadingButton";
 
 export default function GameEnds() {
-  const { lobbyData } = useContext(DataContext);
+  const { lobbyData, isLobbyHost, returnToLobby } = useContext(DataContext);
   const { playGameOver, retryGameOver, stopGameOver, gameOverMusicState } =
     useGameSounds();
   const [celebrationRun, setCelebrationRun] = useState(0);
@@ -96,11 +97,21 @@ export default function GameEnds() {
           </p>
         )}
         {status === "playing" ? (
-          <button type="button" data-game-audio-control onClick={stopGameOver}>
+          <button
+            key="stop"
+            type="button"
+            data-game-audio-control
+            onClick={stopGameOver}
+          >
             Stop celebration music
           </button>
         ) : (
-          <button type="button" data-game-audio-control onClick={retryGameOver}>
+          <button
+            key="play"
+            type="button"
+            data-game-audio-control
+            onClick={retryGameOver}
+          >
             {status === "ended"
               ? "Play the victory music again!"
               : "Play celebration music"}
@@ -118,6 +129,13 @@ export default function GameEnds() {
           >
             Continue without music
           </button>
+        )}
+      </div>
+      <div className="finaleLobby">
+        {isLobbyHost ? (
+          <LoadingButton buttonText="Back to lobby" onClick={returnToLobby} />
+        ) : (
+          <p>Ready for a rematch? Your host can take everyone back to the lobby.</p>
         )}
       </div>
     </section>

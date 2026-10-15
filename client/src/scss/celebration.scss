@@ -49,6 +49,16 @@
   animation: celebrationConfettiFall var(--fall-duration) var(--fall-delay)
     linear infinite;
 }
+.celebrationExplosionParticle {
+  position: absolute;
+  bottom: 8vh;
+  width: var(--piece-width);
+  height: calc(var(--piece-width) * 1.7);
+  visibility: hidden;
+  opacity: 0;
+  animation: celebrationConfettiLaunch var(--launch-duration)
+    var(--finale-reveal-delay) ease-out forwards;
+}
 .celebrationFloater {
   position: absolute;
   bottom: -5rem;
@@ -82,6 +92,26 @@
       rotate(var(--confetti-turn));
   }
 }
+@keyframes celebrationConfettiLaunch {
+  0% {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(0, 0) rotate(0);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(calc(var(--launch-x) * 0.7), var(--launch-y))
+      rotate(calc(var(--launch-turn) * 0.35));
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    visibility: hidden;
+    opacity: 0;
+    transform: translate(var(--launch-x), 115vh) rotate(var(--launch-turn));
+  }
+}
 @keyframes celebrationTrophyFloat {
   from {
     transform: translateY(0) rotate(-12deg);
@@ -108,6 +138,8 @@
 }
 
 .gameFinale {
+  --finale-reveal-delay: 9s;
+  --finale-standings-delay: 10.5s;
   position: relative;
   isolation: isolate;
   text-align: center;
@@ -122,20 +154,21 @@
   .mainTeamContainer,
   .finaleTrophy,
   .finaleRibbon,
-  .celebration--finale {
+  .celebration--finale,
+  .celebration--finale * {
     animation-play-state: paused;
   }
 }
 .gameFinale .celebration--finale {
-  animation: finaleFade 0.25s 7s both;
+  animation: finaleFade 0.1s var(--finale-reveal-delay) both;
 }
 .gameFinale .finaleTrophy {
   font-size: clamp(4rem, 12vw, 7rem);
   line-height: 1.3;
   filter: drop-shadow(4px 5px 0 #392347);
   animation:
-    finaleFade 0.5s 7s both,
-    finaleTrophyBounce 1.3s 7s ease-in-out infinite alternate;
+    finaleFade 0.5s var(--finale-reveal-delay) both,
+    finaleTrophyBounce 1.3s var(--finale-reveal-delay) ease-in-out infinite alternate;
 }
 .gameFinale .finaleRibbon {
   display: inline-block;
@@ -149,7 +182,7 @@
   font-size: clamp(1.2rem, 3vw, 1.7rem);
   letter-spacing: 0.1em;
   transform: rotate(-3deg);
-  animation: finaleFade 0.5s 7s both;
+  animation: finaleFade 0.5s var(--finale-reveal-delay) both;
 }
 .gameFinale .winning-text,
 .gameFinale .winner-revel1,
@@ -168,8 +201,8 @@
 }
 .gameFinale .winner-revel3 {
   animation:
-    finaleFade 1s 7s ease-in-out both,
-    finaleWinnerSpin 2s 7s linear;
+    finaleFade 1s var(--finale-reveal-delay) ease-in-out both,
+    finaleWinnerSpin 2s var(--finale-reveal-delay) linear;
   color: #ffe548;
   text-shadow: 3px 4px 0 #392347;
 }
@@ -179,7 +212,7 @@
   flex-direction: row;
   align-items: stretch;
   margin-top: 24px;
-  animation: finaleFade 1s 8.5s ease-in-out both;
+  animation: finaleFade 1s var(--finale-standings-delay) ease-in-out both;
 }
 #root .gameFinale .teamContainer {
   display: flex;
@@ -234,6 +267,17 @@
 .gameFinale .finaleAudio p {
   margin: 8px 0;
 }
+.gameFinale .finaleLobby {
+  margin: 24px auto 12px;
+  max-width: 520px;
+}
+.gameFinale .finaleLobby p {
+  color: #fff5c2;
+  padding-inline: 12px;
+}
+.gameFinale .finaleLobby .cta {
+  max-width: calc(100% - 36px);
+}
 
 @keyframes finaleTrophyBounce {
   from {
@@ -265,6 +309,9 @@
 @media (max-width: 650px) {
   .celebrationConfetti:nth-child(2n),
   .celebrationFirework:nth-child(2n) {
+    display: none;
+  }
+  .celebrationExplosionParticle:nth-child(n + 91) {
     display: none;
   }
 }

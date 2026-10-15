@@ -283,30 +283,24 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
   const finale = host.locator('[data-celebration="finale"]');
   const winner = host.locator(".gameFinale .winner-revel3");
   const standings = host.locator(".gameFinale .mainTeamContainer");
+  const explosion = finale.locator(".celebrationExplosionParticle");
+  await expect(explosion).toHaveCount(180);
+  await expect(explosion.first()).toBeHidden();
+  await expect(
+    host.getByRole("button", { name: "Back to lobby", exact: true }),
+  ).toBeVisible();
+  await expect(
+    one.getByRole("button", { name: "Back to lobby", exact: true }),
+  ).toHaveCount(0);
   await expect(winner).toBeHidden();
   await expect(standings).toBeHidden();
   await expect(finale).toBeHidden();
-  // Follow actual playback, not page-load time: the final cadence is at 7–8s.
+  // Stop during the buildup, with time before the track's natural ending.
+  // The complete winner/standings sequence must still continue afterwards.
   await host.waitForFunction(
-    (startedAt) => performance.now() - startedAt >= 6500,
+    (startedAt) => performance.now() - startedAt >= 7000,
     music!.time,
   );
-  await expect(winner).toBeHidden();
-  await expect(standings).toBeHidden();
-  await expect(finale).toBeHidden();
-  await expect(winner).toBeVisible({ timeout: 2000 });
-  const revealedAfter = await host.evaluate(
-    (startedAt) => performance.now() - startedAt,
-    music!.time,
-  );
-  expect(revealedAfter).toBeGreaterThanOrEqual(7000);
-  expect(revealedAfter).toBeLessThan(8200);
-  await expect(finale).toBeVisible();
-  expect(await finale.locator(".celebrationFirework").count()).toBeGreaterThan(
-    1,
-  );
-  await expect(finale).toHaveCSS("pointer-events", "none");
-  // Stopping sound mid-reveal must not strand the remaining results offscreen.
   await host
     .getByRole("button", { name: "Stop celebration music", exact: true })
     .click();
@@ -314,6 +308,40 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
     "data-music-status",
     "idle",
   );
+  // The requested nine-second cue follows playback, including slow downloads.
+  await host.waitForFunction(
+    (startedAt) => performance.now() - startedAt >= 8500,
+    music!.time,
+  );
+  await expect(winner).toBeHidden();
+  await expect(standings).toBeHidden();
+  await expect(finale).toBeHidden();
+  await expect(explosion.first()).toBeHidden();
+  await expect(winner).toBeVisible({ timeout: 2000 });
+  const revealedAfter = await host.evaluate(
+    (startedAt) => performance.now() - startedAt,
+    music!.time,
+  );
+  expect(revealedAfter).toBeGreaterThanOrEqual(9000);
+  expect(revealedAfter).toBeLessThan(10200);
+  await expect(finale).toBeVisible();
+  await expect(explosion.first()).toBeVisible();
+  await expect(explosion.first()).toHaveCSS("opacity", "1");
+  const launch = await explosion.first().evaluate((element) => {
+    const animation = element.getAnimations()[0];
+    return {
+      delay: animation.effect!.getTiming().delay,
+      state: animation.playState,
+      elapsed: Number(animation.currentTime),
+    };
+  });
+  expect(launch.delay).toBe(9000);
+  expect(launch.state).toBe("running");
+  expect(launch.elapsed).toBeGreaterThanOrEqual(9000);
+  expect(await finale.locator(".celebrationFirework").count()).toBeGreaterThan(
+    1,
+  );
+  await expect(finale).toHaveCSS("pointer-events", "none");
   await host
     .locator(".gameFinale .winner-revel3, .gameFinale .mainTeamContainer")
     .evaluateAll(async (elements) => {
@@ -343,6 +371,30 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
   ).toBeTruthy();
   await host.screenshot({ path: "output/mobile-finale.png", fullPage: true });
   expect((await gameAudioState(host)).music.status).toBe("idle");
+  await host.getByRole("button", { name: "Back to lobby", exact: true }).click();
+  for (const page of [host, one, two]) {
+    await expect(page.getByRole("heading", { name: "Lobby Config" })).toBeVisible();
+    await expect(page.locator("h1").filter({ hasText: "Game ID:" })).toContainText(code);
+    await expect(page.locator(".PlayersInLobby")).toContainText("player-1");
+    await expect(page.locator(".PlayersInLobby")).toContainText("player-2");
+    await expect(page.locator("#questionPools")).toHaveValues(["8"]);
+    await expect(page.locator("#rounds")).toHaveValue("1");
+    await expect(page.locator("#roundTimer")).toHaveValue("30");
+    await expect(page.locator("#lightningRound")).toBeChecked();
+    await expect(page.locator(".gameFinale, .celebration")).toHaveCount(0);
+    expect((await gameAudioState(page)).music.status).toBe("idle");
+  }
+  // A rematch can change settings and starts with no revealed answers or score.
+  await host.locator("#lightningRound").uncheck();
+  await expect(one.locator("#lightningRound")).not.toBeChecked();
+  await host.getByRole("button", { name: "BEGIN", exact: true }).click();
+  await host.getByRole("button", { name: "START", exact: true }).click();
+  await expect(host.getByTestId("countdown")).toHaveText(/30s|29s/);
+  for (const page of [host, one, two]) {
+    await expect(page.locator(".scoreBoard")).toHaveText(["0000", "0000"]);
+    await expect(page.locator(".answerButton")).toHaveCount(8);
+  }
+  await expect(one.locator(".answerButton .text")).toHaveText(Array(8).fill("❓ ❓ ❓"));
   expect(errors).toEqual([]);
 });
 

@@ -106,8 +106,25 @@ test("Refract parent relay synchronizes host and players without a backend socke
     host.getByRole("heading", { name: "Lobby Config" }),
   ).toBeVisible();
   await host.locator("#lightningRound").uncheck();
+  await host.locator("#questionPools").selectOption("3");
+  await host.locator("#rounds").fill("1");
   await host.locator("#roundTimer").fill("0");
   await expect(one.locator("#roundTimer")).toHaveValue("0");
+  const roomCode = (
+    await host.getByRole("heading", { name: /Game ID:/ }).innerText()
+  ).match(/\d{6}/)![0];
+  const winningScore = await host.locator("#score").inputValue();
+  const assignments = await host
+    .locator('select[aria-label^="Team for "]')
+    .evaluateAll((selects) =>
+      selects.map((select) => ({
+        player: select.getAttribute("aria-label"),
+        team: (select as HTMLSelectElement).value,
+      })),
+    );
+  const teamRosters = await host
+    .locator(".teamsBottomLobbyContainer > div > div")
+    .allTextContents();
   await host.getByRole("button", { name: "BEGIN", exact: true }).click();
   await host.getByRole("button", { name: "START", exact: true }).click();
   await expect(one.locator(".answerButton").first()).toBeVisible();
@@ -117,6 +134,79 @@ test("Refract parent relay synchronizes host and players without a backend socke
     "❓",
   );
   await expect(two.locator(".answerButton .text").first()).not.toContainText(
+    "❓",
+  );
+  await host.locator(".answerButton").nth(1).click();
+  await expect(
+    host.getByRole("button", { name: "End Game", exact: true }),
+  ).toBeVisible();
+  await host.getByRole("button", { name: "End Game", exact: true }).click();
+  for (const frame of [host, one, two])
+    await expect(frame.getByRole("region", { name: "Game results" })).toBeVisible();
+  await expect(
+    one.getByRole("button", { name: "Back to lobby", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    two.getByRole("button", { name: "Back to lobby", exact: true }),
+  ).toHaveCount(0);
+  await host.getByRole("button", { name: "Back to lobby", exact: true }).click();
+  for (const frame of [host, one, two]) {
+    await expect(
+      frame.getByRole("heading", { name: "Lobby Config" }),
+    ).toBeVisible();
+    await expect(frame.getByRole("heading", { name: /Game ID:/ })).toContainText(
+      roomCode,
+    );
+    await expect(frame.locator("#questionPools")).toHaveValues(["3"]);
+    await expect(frame.locator("#rounds")).toHaveValue("1");
+    await expect(frame.locator("#roundTimer")).toHaveValue("0");
+    await expect(frame.locator("#score")).toHaveValue(winningScore);
+    await expect(frame.locator("#lightningRound")).not.toBeChecked();
+    await expect(frame.locator(".playyerInLobbyLi")).toHaveText([
+      "Alice · 2",
+      "Bob · 3",
+    ]);
+    await expect(frame.locator(".teamsBottomLobbyContainer > div > div"))
+      .toHaveText(teamRosters);
+    await expect(frame.locator(".answerButton")).toHaveCount(0);
+    await expect(frame.locator(".gameFinale")).toHaveCount(0);
+  }
+  expect(
+    await host.locator('select[aria-label^="Team for "]').evaluateAll((selects) =>
+      selects.map((select) => ({
+        player: select.getAttribute("aria-label"),
+        team: (select as HTMLSelectElement).value,
+      })),
+    ),
+  ).toEqual(assignments);
+  await expect(host.getByText("You are the host", { exact: true })).toBeVisible();
+  await expect(one.locator("#roundTimer")).toBeDisabled();
+  await expect(two.locator("#roundTimer")).toBeDisabled();
+
+  // A new game uses the same Refract room and a fresh board with zero scores.
+  await host.getByRole("button", { name: "BEGIN", exact: true }).click();
+  await host.getByRole("button", { name: "START", exact: true }).click();
+  for (const frame of [host, one, two]) {
+    await expect(frame.getByRole("heading", { name: "Round 1", exact: true }))
+      .toBeVisible();
+    await expect(frame.locator(".scoreBoard")).toHaveText(["0000", "0000"]);
+    await expect(frame.locator(".answerButton")).toHaveCount(3);
+    await expect(
+      frame.locator(".answerButton .text").filter({ hasText: "✔️" }),
+    ).toHaveCount(0);
+  }
+  await expect(one.locator(".answerButton .text")).toHaveText([
+    "❓ ❓ ❓",
+    "❓ ❓ ❓",
+    "❓ ❓ ❓",
+  ]);
+  await expect(two.locator(".answerButton .text")).toHaveText([
+    "❓ ❓ ❓",
+    "❓ ❓ ❓",
+    "❓ ❓ ❓",
+  ]);
+  await host.locator(".answerButton").first().click();
+  await expect(one.locator(".answerButton .text").first()).not.toContainText(
     "❓",
   );
   // A player leaving keeps the current board; a host leaving elects a new host and resets to a fresh lobby.
