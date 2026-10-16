@@ -15,7 +15,7 @@ async function gameAudioState(page: Page) {
 
 async function expectRoundLayout(page: Page, stacked: boolean) {
   const round = page.locator(".mainGameQuestion");
-  await expect(round.locator(".answerColumn")).toHaveCount(2);
+  await expect(round.getByTestId("answer-board")).toHaveCSS("display", "grid");
   await expect(round.locator(".countdownDisplay")).toBeVisible();
   await expect(round.getByTestId("countdown")).toHaveCSS("opacity", "1");
   await expect(round.locator(".countdownDigits")).toHaveText(/^\d+$/);
@@ -51,8 +51,15 @@ async function expectRoundLayout(page: Page, stacked: boolean) {
       label: box(".countdownLabel"),
       team: box(".currentTeamGuessing"),
       question: box(".questionTitle"),
-      first: box(".answerColumn:first-child"),
-      second: box(".answerColumn:last-child"),
+      answers: Array.from(root.querySelectorAll(".answerButton"), (element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+        };
+      }),
       viewport: innerWidth,
       mainWidth: document
         .querySelector(".mainGameContainer")!
@@ -79,28 +86,39 @@ async function expectRoundLayout(page: Page, stacked: boolean) {
   expect(layout.team.bottom).toBeLessThanOrEqual(layout.question.top + 1);
 
   if (stacked) {
-    expect(layout.second.top).toBeGreaterThanOrEqual(layout.first.bottom - 1);
-    expect(
-      Math.abs(layout.first.left - layout.second.left),
-    ).toBeLessThanOrEqual(1);
-    expect(
-      Math.abs(layout.first.right - layout.second.right),
-    ).toBeLessThanOrEqual(1);
+    for (let index = 1; index < layout.answers.length; index++) {
+      const previous = layout.answers[index - 1];
+      const current = layout.answers[index];
+      expect(current.top).toBeGreaterThanOrEqual(previous.bottom - 1);
+      expect(Math.abs(previous.left - current.left)).toBeLessThanOrEqual(1);
+      expect(Math.abs(previous.right - current.right)).toBeLessThanOrEqual(1);
+    }
   } else {
     expect(
       layout.mainWidth,
       "desktop game uses the available width",
     ).toBeGreaterThan(layout.viewport * 0.9);
-    expect(layout.first.right).toBeLessThanOrEqual(layout.second.left + 1);
-    expect(Math.abs(layout.first.top - layout.second.top)).toBeLessThanOrEqual(
-      1,
-    );
+    // Reading order is left to right on each row: 1–2, 3–4, 5–6, 7–8.
+    for (let index = 0; index < layout.answers.length; index += 2) {
+      const left = layout.answers[index];
+      const right = layout.answers[index + 1];
+      expect(left.right).toBeLessThanOrEqual(right.left + 1);
+      expect(Math.abs(left.top - right.top)).toBeLessThanOrEqual(1);
+      if (index > 0) {
+        const previousRow = layout.answers[index - 2];
+        expect(left.top).toBeGreaterThanOrEqual(previousRow.bottom - 1);
+        expect(Math.abs(left.left - previousRow.left)).toBeLessThanOrEqual(1);
+      }
+    }
   }
 }
 
 test("host and two players finish lightning reveal and a timed eight-answer PDF game", async ({
   context,
 }) => {
+  // The lightning question, main question and rematch each include a real
+  // ten-second reading period, in addition to the nine-second finale.
+  test.setTimeout(120000);
   const host = await context.newPage(),
     one = await context.newPage(),
     two = await context.newPage();
@@ -145,7 +163,14 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
   }
   await host.getByRole("button", { name: "BEGIN", exact: true }).click();
   await host.getByRole("button", { name: "START", exact: true }).click();
-  await host.getByRole("button", { name: "Start!", exact: true }).click();
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "reading",
+  );
+  const startBuzzer = host.getByRole("button", { name: "Start!", exact: true });
+  await expect(startBuzzer).toBeDisabled();
+  await expect(startBuzzer).toBeEnabled({ timeout: 15000 });
+  await startBuzzer.click();
   await expect(
     one.getByRole("button", { name: "Buzzer", exact: true }),
   ).toBeEnabled({ timeout: 10000 });
@@ -180,6 +205,20 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
   );
   await host.getByRole("button", { name: "Continue to main game" }).click();
   await host.getByRole("button", { name: "START", exact: true }).click();
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "reading",
+  );
+  await expect(host.locator(".answerButton").first()).toBeDisabled();
+  await expect(host.locator(".answerButton").first()).toBeEnabled({
+    timeout: 15000,
+  });
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "answer",
+  );
+  await expect(one.locator(".answerButton").first()).toBeDisabled();
+  await expect(two.locator(".answerButton").first()).toBeDisabled();
   await expect(host.getByTestId("countdown")).toHaveText(/30s|29s/);
   await expect(one.locator(".answerButton .text").first()).toContainText("❓");
   for (const page of [host, one]) {
@@ -391,6 +430,14 @@ test("host and two players finish lightning reveal and a timed eight-answer PDF 
   await expect(one.locator("#lightningRound")).not.toBeChecked();
   await host.getByRole("button", { name: "BEGIN", exact: true }).click();
   await host.getByRole("button", { name: "START", exact: true }).click();
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "reading",
+  );
+  await expect(host.locator(".answerButton").first()).toBeDisabled();
+  await expect(host.locator(".answerButton").first()).toBeEnabled({
+    timeout: 15000,
+  });
   await expect(host.getByTestId("countdown")).toHaveText(/30s|29s/);
   for (const page of [host, one, two]) {
     await expect(page.locator(".scoreBoard")).toHaveText(["0000", "0000"]);

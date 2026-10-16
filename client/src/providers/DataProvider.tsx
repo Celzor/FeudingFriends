@@ -24,13 +24,31 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
     usePreviousState<ILobbyData | null>(null);
   const [error, setError] = useState("");
   const [timeOffset, setTimeOffset] = useState(0);
-  const [roundSecondsLeft, setRoundSecondsLeft] = useState<number | null>(null);
+  const [, refreshClock] = useState(0);
   const latestLobby = useRef(lobbyData);
   latestLobby.current = lobbyData;
   const isLobbyHost = Boolean(
     lobbyData && lobbyData.hostSocketId === socket.id,
   );
   const teamsData = lobbyData?.teams || [];
+  const timerState = lobbyData?.gameState === "round" ||
+    lobbyData?.gameState === "lightning_round";
+  const isTimerPaused = lobbyData?.timerPausedAt !== undefined;
+  const refereeNow = lobbyData?.timerPausedAt ?? Date.now() + timeOffset;
+  const questionReadSecondsLeft = timerState
+    ? Math.max(0, (lobbyData.questionReadUntil || 0) - refereeNow)
+    : 0;
+  const isQuestionReading = questionReadSecondsLeft > 0;
+  const answerTimerRunning = timerState && lobbyData?.timerStart !== undefined &&
+    lobbyData.config.timerSeconds > 0;
+  const roundSecondsLeft = answerTimerRunning
+    ? Math.min(lobbyData.config.timerSeconds * 1000, Math.max(0,
+        lobbyData.timerStart + lobbyData.config.timerSeconds * 1000 - refereeNow))
+    : null;
+  const answerControlsDisabled = isQuestionReading || isTimerPaused;
+  // Lock at local zero too, while the referee's timeout update is in flight.
+  const wrongAnswerDisabled = answerControlsDisabled || roundSecondsLeft === 0 ||
+    (lobbyData?.wrongAnswerDisabledUntil || 0) > Date.now() + timeOffset;
   const accept = (response: any) => {
     if (response?.type === "error")
       throw new Error(
@@ -105,33 +123,14 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
   useEffect(() => {
-    const active =
-      lobbyData?.gameState === "round" ||
-      (lobbyData?.gameState === "lightning_round" &&
-        lobbyData.lightningRoundTeamIndex !== undefined);
-    if (!active || !lobbyData?.timerStart || !lobbyData.config.timerSeconds) {
-      setRoundSecondsLeft(null);
-      return;
-    }
-    const tick = () =>
-      setRoundSecondsLeft(
-        Math.max(
-          0,
-          lobbyData.timerStart +
-            lobbyData.config.timerSeconds * 1000 -
-            Date.now() -
-            timeOffset,
-        ),
-      );
-    tick();
-    const interval = setInterval(tick, 100);
+    if (!timerState || isTimerPaused || (!isQuestionReading && !answerTimerRunning)) return;
+    const interval = setInterval(() => refreshClock((tick) => tick + 1), 100);
     return () => clearInterval(interval);
   }, [
-    lobbyData?.gameState,
-    lobbyData?.timerStart,
-    lobbyData?.config.timerSeconds,
-    lobbyData?.lightningRoundTeamIndex,
-    timeOffset,
+    timerState,
+    isTimerPaused,
+    isQuestionReading,
+    answerTimerRunning,
   ]);
 
   const setPlayerName = async (name: string) => {
@@ -189,6 +188,11 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
         teamsData,
         error,
         roundSecondsLeft,
+        wrongAnswerDisabled,
+        answerControlsDisabled,
+        questionReadSecondsLeft,
+        isQuestionReading,
+        isTimerPaused,
         isInLobby: Boolean(lobbyData),
         isInGame: Boolean(lobbyData && lobbyData.gameState !== "lobby"),
         setPlayerName,
@@ -210,6 +214,8 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
           action("lightning_buzz_in", { challenge }),
         hostEndGame: () => action("end_game"),
         returnToLobby: () => action("return_to_lobby"),
+        pauseTimer: () => action("pause_timer"),
+        resumeTimer: () => action("resume_timer"),
         answerQuestion: (answerChosen: IAnswerType | false) =>
           action("choose_team_answer", { answerChosen }),
         answerLightningQuestion: (answerChosen: IAnswerType | false) =>
@@ -237,6 +243,11 @@ type ContextValue = {
   teamsData: ITeamData[];
   error: string;
   roundSecondsLeft: number | null;
+  wrongAnswerDisabled: boolean;
+  answerControlsDisabled: boolean;
+  questionReadSecondsLeft: number;
+  isQuestionReading: boolean;
+  isTimerPaused: boolean;
   isInLobby: boolean;
   isInGame: boolean;
   setPlayerName: (name: string) => Promise<void>;
@@ -257,6 +268,8 @@ type ContextValue = {
   teamBuzzIn: (challenge?: { step: number; target: number }) => Promise<void>;
   hostEndGame: () => Promise<void>;
   returnToLobby: () => Promise<void>;
+  pauseTimer: () => Promise<void>;
+  resumeTimer: () => Promise<void>;
   answerQuestion: (answer: IAnswerType | false) => Promise<void>;
   answerLightningQuestion: (answer: IAnswerType | false) => Promise<void>;
 };

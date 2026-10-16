@@ -10,6 +10,7 @@ import type {
   IMessage,
 } from "../types";
 import LobbyLogic from "./LobbyLogic";
+import { QUESTION_READING_MS, WRONG_ANSWER_COOLDOWN_MS } from "./timing";
 
 export interface GameConnection {
   id: string;
@@ -27,6 +28,8 @@ const hostActions: Record<string, string[]> = {
   continue_lightning: ["lightning_reveal"],
   advance_round: ["host_set_question"],
   choose_team_answer: ["round"],
+  pause_timer: ["round", "lightning_round"],
+  resume_timer: ["round", "lightning_round"],
   end_round: ["round_end"],
   end_game: ["game_end"],
   return_to_lobby: ["game_over"],
@@ -140,23 +143,39 @@ export default class Game {
   private armTimer(lobby: ILobbyData, reset = true) {
     clearTimeout(this.timers.get(lobby.lobbyCode));
     this.timers.delete(lobby.lobbyCode);
+    const inRound = ["round", "lightning_round"].includes(lobby.gameState);
+    if (!inRound) {
+      lobby.questionReadUntil = undefined;
+      lobby.timerPausedAt = undefined;
+    }
+    if (lobby.timerPausedAt !== undefined) return;
     const active =
       lobby.gameState === "round" ||
       (lobby.gameState === "lightning_round" &&
         lobby.lightningRoundTeamIndex !== undefined);
     if (!active || !lobby.config.timerSeconds) {
       lobby.timerStart = undefined;
+      lobby.wrongAnswerDisabledUntil = undefined;
       return;
     }
     if (reset)
-      lobby.timerStart = Math.max(Date.now(), (lobby.timerStart || 0) + 1);
+      lobby.timerStart = Math.max(
+        Date.now(),
+        lobby.questionReadUntil || 0,
+        (lobby.timerStart || 0) + 1,
+      );
     const start = lobby.timerStart;
     const timer = setTimeout(
       () => {
-        if (!this.lobbies.has(lobby.lobbyCode) || lobby.timerStart !== start)
+        if (
+          !this.lobbies.has(lobby.lobbyCode) ||
+          lobby.timerStart !== start ||
+          lobby.timerPausedAt !== undefined
+        )
           return;
         if (lobby.gameState === "round") LobbyLogic.chooseAnswer(lobby, false);
         else this.lightningAnswer(lobby, false);
+        lobby.wrongAnswerDisabledUntil = Date.now() + WRONG_ANSWER_COOLDOWN_MS;
         lobby.revision = (lobby.revision || 0) + 1;
         this.armTimer(lobby);
         this.publish(lobby);
@@ -231,6 +250,26 @@ export default class Game {
       "Select an unanswered answer from this board.",
     );
     return found;
+  }
+  private allowManualWrongAnswer(lobby: ILobbyData, input: any) {
+    if (input !== false) return;
+    const now = Date.now();
+    requireThat(
+      !(lobby.wrongAnswerDisabledUntil > now) &&
+        !(
+          lobby.config.timerSeconds &&
+          lobby.timerStart !== undefined &&
+          lobby.timerStart + lobby.config.timerSeconds * 1000 <= now
+        ),
+      "The timer just counted a wrong answer. Wait two seconds before marking another.",
+    );
+  }
+  private requireAnswering(lobby: ILobbyData) {
+    requireThat(lobby.timerPausedAt === undefined, "The timer is paused.");
+    requireThat(
+      !(lobby.questionReadUntil > Date.now()),
+      "Wait for the question-reading time to finish.",
+    );
   }
   private lightningAnswer(lobby: ILobbyData, answer: IAnswerType | false) {
     requireThat(
@@ -410,6 +449,9 @@ export default class Game {
               lobby.players.some((p) => p.teamId === t.teamId),
             );
             LobbyLogic.startGame(lobby);
+            lobby.wrongAnswerDisabledUntil = undefined;
+            lobby.questionReadUntil = undefined;
+            lobby.timerPausedAt = undefined;
             break;
           case "get_question": {
             const lightning =
@@ -440,13 +482,18 @@ export default class Game {
               startedAt: 0,
             };
             lobby.teams.forEach((t) => (t.wrongGuesses = 0));
+            lobby.wrongAnswerDisabledUntil = undefined;
+            lobby.questionReadUntil = Date.now() + QUESTION_READING_MS;
+            lobby.timerPausedAt = undefined;
             break;
           case "begin_lightning_buzzer":
+            this.requireAnswering(lobby);
             requireThat(!lobby.lightningRoundStarted, "Already started.");
             lobby.lightningRoundStarted = true;
             lobby.lightningChallenge.startedAt = Date.now() + 1500;
             break;
           case "lightning_buzz_in": {
+            this.requireAnswering(lobby);
             requireThat(
               player &&
                 lobby.gameState === "lightning_round" &&
@@ -484,6 +531,8 @@ export default class Game {
             break;
           }
           case "choose_lightning_answer":
+            this.requireAnswering(lobby);
+            this.allowManualWrongAnswer(lobby, data.answerChosen);
             this.lightningAnswer(
               lobby,
               this.answer(lobby.lightningQuestion, data.answerChosen),
@@ -497,13 +546,48 @@ export default class Game {
               lobby,
               this.confirmed(lobby, data.question, false),
             );
+            lobby.wrongAnswerDisabledUntil = undefined;
+            lobby.questionReadUntil = Date.now() + QUESTION_READING_MS;
+            lobby.timerPausedAt = undefined;
             break;
           case "choose_team_answer":
+            this.requireAnswering(lobby);
+            this.allowManualWrongAnswer(lobby, data.answerChosen);
             LobbyLogic.chooseAnswer(
               lobby,
               this.answer(lobby.currentQuestion, data.answerChosen),
             );
             break;
+          case "pause_timer": {
+            requireThat(lobby.timerPausedAt === undefined, "Already paused.");
+            const now = Date.now();
+            const reading = lobby.questionReadUntil > now;
+            const answering =
+              lobby.config.timerSeconds > 0 &&
+              lobby.timerStart !== undefined &&
+              (lobby.gameState === "round" ||
+                lobby.lightningRoundTeamIndex !== undefined);
+            requireThat(reading || answering, "No countdown is running.");
+            requireThat(
+              !answering ||
+                lobby.timerStart + lobby.config.timerSeconds * 1000 > now,
+              "The answer timer has already expired.",
+            );
+            lobby.timerPausedAt = now;
+            clearTimeout(this.timers.get(lobby.lobbyCode));
+            this.timers.delete(lobby.lobbyCode);
+            break;
+          }
+          case "resume_timer": {
+            requireThat(lobby.timerPausedAt !== undefined, "Not paused.");
+            const pausedFor = Math.max(0, Date.now() - lobby.timerPausedAt);
+            if (lobby.questionReadUntil > lobby.timerPausedAt)
+              lobby.questionReadUntil += pausedFor;
+            if (lobby.timerStart !== undefined) lobby.timerStart += pausedFor;
+            lobby.timerPausedAt = undefined;
+            this.armTimer(lobby, false);
+            break;
+          }
           case "end_round":
             lobby.gameState = "host_set_question";
             break;

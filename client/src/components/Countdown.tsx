@@ -1,42 +1,60 @@
 import React, { useContext } from "react";
 import { DataContext } from "../providers/DataProvider";
+import { QUESTION_READING_MS } from "../../../shared/timing";
 export default function Countdown() {
-  const { roundSecondsLeft, lobbyData } = useContext(DataContext);
-  if (roundSecondsLeft == null || !lobbyData.config.timerSeconds) return null;
+  const {
+    roundSecondsLeft, lobbyData, questionReadSecondsLeft, isQuestionReading,
+    isTimerPaused, isLobbyHost, pauseTimer, resumeTimer,
+  } = useContext(DataContext);
+  if (!isQuestionReading && roundSecondsLeft == null) return null;
+  const remaining = isQuestionReading ? questionReadSecondsLeft : roundSecondsLeft;
   const ratio = Math.min(
     1,
-    Math.max(0, roundSecondsLeft / (lobbyData.config.timerSeconds * 1000)),
+    Math.max(0, remaining / (isQuestionReading ? QUESTION_READING_MS : lobbyData.config.timerSeconds * 1000)),
   );
+  const color = isQuestionReading ? "#ffe548" : `hsl(${Math.round(ratio * 120)} 75% 58%)`;
   return (
-    <div className="countdownWell">
+    <div className={`countdownWell ${isLobbyHost ? "countdownWithControls" : ""}`}>
       <div className="countdownDisplay">
         <div
           role="timer"
-          aria-label={`${Math.ceil(roundSecondsLeft / 1000)} seconds remaining`}
+          aria-label={`${Math.ceil(remaining / 1000)} seconds ${isQuestionReading ? "to read the question" : "remaining"}${isTimerPaused ? ", paused" : ""}`}
           data-testid="countdown"
-          className={`countdown ${ratio <= 0.25 ? "countdownUrgent" : ""}`}
+          data-timer-phase={isQuestionReading ? "reading" : "answer"}
+          className={`countdown ${!isQuestionReading && ratio <= 0.25 ? "countdownUrgent" : ""}`}
           style={{
-            color: `hsl(${Math.round(ratio * 120)} 75% 58%)`,
-            transform: `scale(${1 + (1 - ratio) * 0.65})`,
+            color,
+            transform: `scale(${isQuestionReading ? 1 : 1 + (1 - ratio) * 0.65})`,
           }}
         >
           <span className="countdownDigits">
-            {Math.ceil(roundSecondsLeft / 1000)}
+            {Math.ceil(remaining / 1000)}
           </span>
           <span className="countdownUnit">s</span>
         </div>
       </div>
       <span className="countdownLabel">
-        {roundSecondsLeft === 0 ? "Time’s up!" : "Make it count!"}
+        {isTimerPaused ? "Paused" : isQuestionReading ? "Read the question" : remaining === 0 ? "Time’s up!" : "Make it count!"}
       </span>
       <div className="countdownTrack">
         <div
           style={{
             width: `${ratio * 100}%`,
-            background: `hsl(${Math.round(ratio * 120)} 75% 58%)`,
+            background: color,
           }}
         />
       </div>
+      {isLobbyHost && (
+        <button
+          type="button"
+          className="timerToggle"
+          disabled={!isTimerPaused && !isQuestionReading && remaining === 0}
+          aria-label={isTimerPaused ? "Resume timer" : "Pause timer"}
+          onClick={isTimerPaused ? resumeTimer : pauseTimer}
+        >
+          {isTimerPaused ? "Resume" : "Pause"}
+        </button>
+      )}
     </div>
   );
 }

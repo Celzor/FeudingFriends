@@ -130,12 +130,32 @@ body {
   line-height: 1.3;
 }
 #root .countdownWell {
+  position: relative;
   flex: 0 0 auto;
   width: min(220px, 46%);
   grid-template-rows: 64px auto 5px;
   gap: 4px;
   margin: 0 auto;
   padding: 0 12px 4px;
+}
+#root .countdownWell.countdownWithControls {
+  width: min(300px, 58%);
+  min-width: min(200px, 100%);
+  padding-right: 80px;
+}
+#root .timerToggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 68px;
+  min-height: 44px;
+  padding: 6px 4px;
+  border: 2px solid #ffe548;
+  border-radius: 6px;
+  background: #392347;
+  color: #fff5c2;
+  font-size: 0.85rem;
 }
 #root .roundStatus .countdownWell {
   margin: 0;
@@ -172,19 +192,18 @@ body {
   box-shadow: 4px 4px 0 #8f8f6c;
 }
 #root .answerButtonContainer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
   flex: 1 1 auto;
   min-height: 64px;
   justify-content: flex-start;
-  gap: 12px;
+  gap: 6px 12px;
   margin: 0;
   padding: 2px 4px 6px 0;
   overflow: auto;
   scrollbar-gutter: stable;
   overscroll-behavior: contain;
-}
-#root .answerColumn {
-  align-self: flex-start;
-  gap: 8px;
 }
 #root .answerButton {
   min-height: 44px;
@@ -214,6 +233,10 @@ body {
   height: auto;
   padding: 6px 14px;
   font-size: 1rem;
+}
+#root .wrongAnswerButton:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 #root .teamData {
   flex: 0 0 auto;
@@ -433,14 +456,10 @@ body {
   #root .countdownTrack {
     height: 4px;
   }
-  #root .answerColumn {
-    gap: 6px;
-  }
 }
 @media (max-width: 760px) {
-  #root .answerColumn {
-    flex: 0 0 auto;
-    width: 100%;
+  #root .answerButtonContainer {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 650px) {

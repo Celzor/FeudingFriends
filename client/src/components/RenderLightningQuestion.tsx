@@ -13,6 +13,7 @@ export default function RenderLightningQuestion() {
     answerLightningQuestion,
     startTheLightningBuzzer,
     continueLightning,
+    answerControlsDisabled,
   } = useContext(DataContext);
   const reveal = lobbyData.gameState === "lightning_reveal";
   const question = lobbyData.lightningQuestion;
@@ -32,6 +33,7 @@ export default function RenderLightningQuestion() {
     <div className="lightningQuestion">
       {celebrating && <Celebration intensity="round" />}
       <div className="questionTitle">{question.question}</div>
+      {!reveal && <Countdown />}
       {reveal ? (
         <section
           className="lightningReveal"
@@ -63,7 +65,7 @@ export default function RenderLightningQuestion() {
       ) : (
         <>
           {!lobbyData.lightningRoundStarted && isLobbyHost && (
-            <button className="startButton" onClick={startTheLightningBuzzer}>
+            <button className="startButton" disabled={answerControlsDisabled} onClick={startTheLightningBuzzer}>
               Start!
             </button>
           )}
@@ -84,7 +86,6 @@ export default function RenderLightningQuestion() {
                   ? "is guessing..."
                   : "buzzed in!"}
               </h2>
-              <Countdown />
               <AnswerBoard
                 answers={question.answers}
                 onAnswer={(answer) => {
