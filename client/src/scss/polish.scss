@@ -106,13 +106,6 @@ select {
   margin: 20px 0;
   width: 100%;
 }
-#root .answerColumn {
-  display: flex;
-  flex: 1 1 0;
-  min-width: 0;
-  flex-direction: column;
-  gap: 12px;
-}
 button,
 input,
 select {
@@ -323,15 +316,6 @@ select {
   .challengeTarget {
     width: 80px;
     font-size: 0.95rem;
-  }
-}
-@media (max-width: 760px) {
-  #root .answerButtonContainer {
-    flex-direction: column;
-    gap: 12px;
-  }
-  #root .answerColumn {
-    flex-basis: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {

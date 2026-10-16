@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: ["refract.spec.ts", "pages.spec.ts", "viewport.spec.ts"],
+  testMatch: ["refract.spec.ts", "pages.spec.ts", "viewport.spec.ts", "timeout.spec.ts"],
   outputDir: "./output/pages-results",
   fullyParallel: false,
   timeout: 60000,

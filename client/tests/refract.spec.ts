@@ -3,6 +3,8 @@ import { test, expect } from "@playwright/test";
 test("Refract parent relay synchronizes host and players without a backend socket", async ({
   page,
 }) => {
+  // Both games wait through their actual ten-second question-reading period.
+  test.setTimeout(90000);
   const errors: string[] = [];
   const backendRequests: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -139,6 +141,17 @@ test("Refract parent relay synchronizes host and players without a backend socke
     .allTextContents();
   await host.getByRole("button", { name: "BEGIN", exact: true }).click();
   await host.getByRole("button", { name: "START", exact: true }).click();
+  // Reading time remains active when the answer timer is configured off.
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "reading",
+  );
+  await expect(host.locator(".answerButton").first()).toBeDisabled();
+  await expect(host.locator(".answerButton").first()).toBeEnabled({
+    timeout: 15000,
+  });
+  await expect(one.locator(".answerButton").first()).toBeDisabled();
+  await expect(two.locator(".answerButton").first()).toBeDisabled();
   await expect(one.locator(".answerButton").first()).toBeVisible();
   await expect(one.locator(".answerButton .text").first()).toContainText("❓");
   await host.locator(".answerButton").first().click();
@@ -198,6 +211,14 @@ test("Refract parent relay synchronizes host and players without a backend socke
   // A new game uses the same Refract room and a fresh board with zero scores.
   await host.getByRole("button", { name: "BEGIN", exact: true }).click();
   await host.getByRole("button", { name: "START", exact: true }).click();
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "reading",
+  );
+  await expect(host.locator(".answerButton").first()).toBeDisabled();
+  await expect(host.locator(".answerButton").first()).toBeEnabled({
+    timeout: 15000,
+  });
   for (const frame of [host, one, two]) {
     await expect(frame.getByRole("heading", { name: "Round 1", exact: true }))
       .toBeVisible();

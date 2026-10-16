@@ -36,7 +36,7 @@ export function AnswerButton({
   index,
   roundEnd,
 }: IAnswerButtonProps) {
-  const { lobbyData, isLobbyHost } = useContext(DataContext);
+  const { lobbyData, isLobbyHost, answerControlsDisabled } = useContext(DataContext);
 
   const [isExploding, setIsExploding] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
@@ -73,7 +73,7 @@ export function AnswerButton({
     return () => clearTimeout(timer);
   }, [answer.answerSelected, roundEnd]);
 
-  const buttonDisabled = !isLobbyHost || answer.answerSelected || roundEnd;
+  const buttonDisabled = !isLobbyHost || answer.answerSelected || roundEnd || answerControlsDisabled;
 
   const displayQuestion = roundEnd || answer.answerSelected || isLobbyHost;
   const buttonBackgroundColor = answer.answerSelected
@@ -122,13 +122,21 @@ export function AnswerButton({
 }
 
 export function WrongAnswerButton({ onClick, roundEnd }) {
-  const { isLobbyHost } = useContext(DataContext);
+  const { isLobbyHost, wrongAnswerDisabled, isQuestionReading, isTimerPaused } = useContext(DataContext);
 
   return (
     <div className="wrongAnswerButtonContainer">
       {isLobbyHost && (
-        <button className="wrongAnswerButton" onClick={onClick}>
-          ❌WRONG ANSWER❌
+        <button
+          className="wrongAnswerButton"
+          onClick={onClick}
+          disabled={roundEnd || wrongAnswerDisabled}
+          title={wrongAnswerDisabled && !isQuestionReading && !isTimerPaused
+            ? "The timer expired. Wait two seconds before marking another wrong answer."
+            : undefined}
+        >
+          {isTimerPaused ? "⏸ TIMER PAUSED" : isQuestionReading ? "READ THE QUESTION…" :
+            wrongAnswerDisabled ? "⏳ PLEASE WAIT" : "❌WRONG ANSWER❌"}
         </button>
       )}
     </div>

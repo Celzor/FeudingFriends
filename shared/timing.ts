@@ -1,0 +1,2 @@
+export const QUESTION_READING_MS = 10_000;
+export const WRONG_ANSWER_COOLDOWN_MS = 2_000;

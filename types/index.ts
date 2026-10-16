@@ -60,6 +60,12 @@ export type ILobbyData = {
   players: IPlayerData[];
 
   timerStart?: number;
+  /** Full answer time starts after this shared question-reading deadline. */
+  questionReadUntil?: number;
+  /** Frozen referee clock; resume shifts outstanding deadlines by the pause duration. */
+  timerPausedAt?: number;
+  /** Referee timestamp protecting the automatic timeout strike from a second click. */
+  wrongAnswerDisabledUntil?: number;
 };
 
 export type IPlayerData = {

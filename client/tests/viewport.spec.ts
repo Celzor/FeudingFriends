@@ -205,6 +205,18 @@ test("Refract fits the iframe through lobby, eight-answer round and winner revea
   );
   await host.getByRole("button", { name: "START", exact: true }).click();
   await expect(host.locator(".answerButton")).toHaveCount(8);
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "reading",
+  );
+  await expect(host.locator(".answerButton").first()).toBeDisabled();
+  await expect(host.locator(".answerButton").first()).toBeEnabled({
+    timeout: 15000,
+  });
+  await expect(host.getByTestId("countdown")).toHaveAttribute(
+    "data-timer-phase",
+    "answer",
+  );
   await expectLiveControlsFit(host);
   for (const answer of await host.locator(".answerButton").all())
     await expectInsideWindow(answer);

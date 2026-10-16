@@ -102,13 +102,15 @@ Enable **Lightning Round** in the lobby. Each new game randomly selects **Catch 
 
 After lightning ends, **all lightning answers stay on screen for everyone**. The host chooses **Continue to main game** when ready.
 
-The host sets **Seconds per answer** (0 disables it; maximum 300). Each selected answer, including a wrong answer, resets the clock. The clock grows and shifts from green through amber to red as time runs out. The referee handles expiry even when the host tab is idle: a timeout counts as a wrong answer, three wrong answers open a steal, and a failed steal ends the round. Lightning answer turns also use this timer; the chase itself waits for a valid buzz.
+Every confirmed question starts with **10 seconds to read it**, including when the answer timer is off. Answer controls and the lightning launch stay disabled during that reading period. The host can **Pause** or **Resume** either countdown; everyone sees the same remaining time, and resuming preserves it.
+
+The host sets **Seconds per answer** (0 disables it; maximum 300). The full answer time starts after reading. Each selected answer, including a wrong answer, resets the answer clock. The clock grows and shifts from green through amber to red as time runs out. The referee handles expiry even when the host tab is idle: a timeout counts as a wrong answer, three wrong answers open a steal, and a failed steal ends the round. **Wrong Answer** is disabled for two seconds after a timeout to prevent an accidental second penalty; correct answers remain available. Lightning answer turns also use this timer; the chase itself waits for a valid buzz.
 
 Main rounds finish when at least 60% of answers have been selected (rounded up), or after a steal attempt. The round winner receives the selected board's total points. The selected round count and optional winning score determine the finish.
 
 The purple stage, yellow trims, chunky buttons, original sounds and scoreboards remain. Layouts now fit mobile screens, inputs have readable contrast and labels, keyboard focus is visible, fonts load locally, and reduced-motion preferences are respected.
 
-The game uses the available desktop width. Answer boards have two balanced columns, numbered down the left and then the right; screens at 760px or narrower stack them into one column. The countdown reserves space for its growing digits so it stays centered and clear of headings and labels.
+The game uses the available desktop width. Answer boards are numbered across each row: **1–2, 3–4, 5–6**, and so on. Screens at 760px or narrower show one column in numerical order. The countdown reserves space for its growing digits so it stays centered and clear of headings and labels.
 
 On the last configured main round, every team gets a **FINAL ROUND — MAKE IT COUNT!** banner. The active team's banner highlights its turn; lightning rounds and earlier main rounds do not show the warning.
 
@@ -118,7 +120,7 @@ After the game, the host can choose **Back to lobby** to bring everyone back for
 
 The stage fills the available window or Refract activity height. Headers, scores and primary actions stay in their own flex rows; settings, rosters, answers and results scroll within the remaining space when needed. Desktop answers use two columns and narrow screens stack them, with controls retaining at least 44px touch targets.
 
-The victory track retains its complete intro and original reveal sequence: the score builds at 5–6 seconds, the winner appears across the final fanfare at 7–8 seconds, and standings follow at 8.5 seconds. This sequence starts with actual music playback, including after an autoplay retry; reduced motion removes the spin without revealing the winner early. If music cannot play, **Continue without music** runs the same buildup silently.
+The victory track retains its complete intro: the score builds at 5–6 seconds, the winner and confetti appear at nine seconds, and standings follow at 10.5 seconds. This sequence starts with actual music playback, including after an autoplay retry; reduced motion removes the spin without revealing the winner early. If music cannot play, **Continue without music** runs the same buildup silently.
 
 ## Question data
 

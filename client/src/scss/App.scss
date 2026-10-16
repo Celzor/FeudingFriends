@@ -434,6 +434,7 @@ Gameplay
 }
 
 .xmark {
+  pointer-events: none;
   position: fixed;
   top: -20%;
   left: 50%;
