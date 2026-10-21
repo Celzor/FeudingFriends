@@ -4,7 +4,7 @@ import { QUESTION_READING_MS } from "../../../shared/timing";
 export default function Countdown() {
   const {
     roundSecondsLeft, lobbyData, questionReadSecondsLeft, isQuestionReading,
-    isTimerPaused, isLobbyHost, pauseTimer, resumeTimer,
+    isTimerPaused, isLobbyHost, pauseTimer, resumeTimer, skipReading,
   } = useContext(DataContext);
   if (!isQuestionReading && roundSecondsLeft == null) return null;
   const remaining = isQuestionReading ? questionReadSecondsLeft : roundSecondsLeft;
@@ -45,15 +45,22 @@ export default function Countdown() {
         />
       </div>
       {isLobbyHost && (
-        <button
-          type="button"
-          className="timerToggle"
-          disabled={!isTimerPaused && !isQuestionReading && remaining === 0}
-          aria-label={isTimerPaused ? "Resume timer" : "Pause timer"}
-          onClick={isTimerPaused ? resumeTimer : pauseTimer}
-        >
-          {isTimerPaused ? "Resume" : "Pause"}
-        </button>
+        <div className="timerControls">
+          <button
+            type="button"
+            className="timerToggle"
+            disabled={!isTimerPaused && !isQuestionReading && remaining === 0}
+            aria-label={isTimerPaused ? "Resume timer" : "Pause timer"}
+            onClick={isTimerPaused ? resumeTimer : pauseTimer}
+          >
+            {isTimerPaused ? "Resume" : "Pause"}
+          </button>
+          {isQuestionReading && (
+            <button type="button" className="timerSkip" onClick={skipReading}>
+              Skip reading
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

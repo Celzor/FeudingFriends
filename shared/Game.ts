@@ -30,6 +30,7 @@ const hostActions: Record<string, string[]> = {
   choose_team_answer: ["round"],
   pause_timer: ["round", "lightning_round"],
   resume_timer: ["round", "lightning_round"],
+  skip_reading: ["round", "lightning_round"],
   end_round: ["round_end"],
   end_game: ["game_end"],
   return_to_lobby: ["game_over"],
@@ -147,6 +148,7 @@ export default class Game {
     if (!inRound) {
       lobby.questionReadUntil = undefined;
       lobby.timerPausedAt = undefined;
+      lobby.wrongAnswerDisabledUntil = undefined;
     }
     if (lobby.timerPausedAt !== undefined) return;
     const active =
@@ -155,7 +157,6 @@ export default class Game {
         lobby.lightningRoundTeamIndex !== undefined);
     if (!active || !lobby.config.timerSeconds) {
       lobby.timerStart = undefined;
-      lobby.wrongAnswerDisabledUntil = undefined;
       return;
     }
     if (reset)
@@ -261,7 +262,7 @@ export default class Game {
           lobby.timerStart !== undefined &&
           lobby.timerStart + lobby.config.timerSeconds * 1000 <= now
         ),
-      "The timer just counted a wrong answer. Wait two seconds before marking another.",
+      "A wrong answer was just counted. Wait two seconds before marking another.",
     );
   }
   private requireAnswering(lobby: ILobbyData) {
@@ -537,6 +538,8 @@ export default class Game {
               lobby,
               this.answer(lobby.lightningQuestion, data.answerChosen),
             );
+            if (data.answerChosen === false)
+              lobby.wrongAnswerDisabledUntil = Date.now() + WRONG_ANSWER_COOLDOWN_MS;
             break;
           case "continue_lightning":
             lobby.gameState = "host_set_question";
@@ -557,7 +560,32 @@ export default class Game {
               lobby,
               this.answer(lobby.currentQuestion, data.answerChosen),
             );
+            if (data.answerChosen === false)
+              lobby.wrongAnswerDisabledUntil = Date.now() + WRONG_ANSWER_COOLDOWN_MS;
             break;
+          case "skip_reading": {
+            const now = Date.now();
+            const clock = lobby.timerPausedAt ?? now;
+            requireThat(
+              lobby.questionReadUntil > clock,
+              "No question-reading time is running.",
+            );
+            lobby.questionReadUntil = undefined;
+            const answering =
+              lobby.config.timerSeconds > 0 &&
+              (lobby.gameState === "round" ||
+                lobby.lightningRoundTeamIndex !== undefined);
+            if (answering) {
+              // Preserve a paused countdown, with the full answer time ready
+              // to start when the host resumes it.
+              lobby.timerStart = clock;
+            } else {
+              // Without an answer countdown there is nothing left to pause.
+              lobby.timerPausedAt = undefined;
+            }
+            this.armTimer(lobby, false);
+            break;
+          }
           case "pause_timer": {
             requireThat(lobby.timerPausedAt === undefined, "Already paused.");
             const now = Date.now();

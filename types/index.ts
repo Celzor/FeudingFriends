@@ -64,7 +64,7 @@ export type ILobbyData = {
   questionReadUntil?: number;
   /** Frozen referee clock; resume shifts outstanding deadlines by the pause duration. */
   timerPausedAt?: number;
-  /** Referee timestamp protecting the automatic timeout strike from a second click. */
+  /** Referee deadline blocking another manual wrong answer after any strike. */
   wrongAnswerDisabledUntil?: number;
 };
 

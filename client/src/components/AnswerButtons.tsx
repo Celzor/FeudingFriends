@@ -132,7 +132,7 @@ export function WrongAnswerButton({ onClick, roundEnd }) {
           onClick={onClick}
           disabled={roundEnd || wrongAnswerDisabled}
           title={wrongAnswerDisabled && !isQuestionReading && !isTimerPaused
-            ? "The timer expired. Wait two seconds before marking another wrong answer."
+            ? "Wait two seconds before marking another wrong answer."
             : undefined}
         >
           {isTimerPaused ? "⏸ TIMER PAUSED" : isQuestionReading ? "READ THE QUESTION…" :
