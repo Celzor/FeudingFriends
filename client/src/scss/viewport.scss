@@ -143,11 +143,19 @@ body {
   min-width: min(200px, 100%);
   padding-right: 80px;
 }
-#root .timerToggle {
+#root .countdownWithControls:has(.timerSkip) {
+  min-height: 100px;
+}
+#root .timerControls {
   position: absolute;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
+  display: grid;
+  gap: 4px;
+}
+#root .timerToggle,
+#root .timerSkip {
   width: 68px;
   min-height: 44px;
   padding: 6px 4px;

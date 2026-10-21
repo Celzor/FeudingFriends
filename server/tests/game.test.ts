@@ -97,6 +97,7 @@ test("every host action is refused to players and strangers; invalid messages do
     "choose_team_answer",
     "pause_timer",
     "resume_timer",
+    "skip_reading",
     "end_round",
     "end_game",
     "return_to_lobby",
@@ -290,7 +291,7 @@ test("timeout blocks duplicate wrong answers for exactly two seconds while corre
   lobby = accepted.data.lobby;
   assert.equal(lobby.teams[0].wrongGuesses, 2);
   assert.equal(lobby.timerStart, timeoutAt + 2000);
-  assert.equal(lobby.wrongAnswerDisabledUntil, timeoutAt + 2000);
+  assert.equal(lobby.wrongAnswerDisabledUntil, timeoutAt + 4000);
 });
 
 test("a manual wrong racing an elapsed timer cannot bypass the pending automatic strike", async (t) => {
@@ -389,21 +390,88 @@ test("ending a round during cooldown clears it before the next board", async (t)
   assert.equal(manualWrong.data.lobby.teams[1].wrongGuesses, 1);
 });
 
-test("manual wrong answers do not introduce a cooldown with enabled or disabled timers", async (t) => {
+test("every manual wrong answer starts a two-second cooldown, including with timers off and entering a steal", async (t) => {
   t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: 100000 });
   for (const seconds of [0, 10]) {
-    const { request } = await setup(t, false, seconds);
+    const { request, events, game } = await setup(t, false, seconds);
     await request("host", "start_game");
     await beginRound(request);
-    for (const strikes of [1, 2]) {
+    for (const strikes of [1, 2, 3]) {
+      const acceptedAt = Date.now();
       const response = await request("host", "choose_team_answer", {
         answerChosen: false,
+        wrongAnswerDisabledUntil: 0,
       });
       assert.equal(response.type, "lobby_update");
       assert.equal(response.data.lobby.teams[0].wrongGuesses, strikes);
-      assert.equal(response.data.lobby.wrongAnswerDisabledUntil, undefined);
+      assert.equal(response.data.lobby.wrongAnswerDisabledUntil, acceptedAt + 2000);
       if (seconds === 0) assert.equal(response.data.lobby.timerStart, undefined);
+      if (strikes === 3) assert.equal(response.data.lobby.suddenDeathTeamIndex, 1);
+      for (const id of ["host", "one", "two"])
+        assert.equal(events[id].at(-1).data.lobby.wrongAnswerDisabledUntil, acceptedAt + 2000);
+
+      // Correct answers remain available and cannot remove the cooldown.
+      if (strikes === 1) {
+        const correct = await request("host", "choose_team_answer", {
+          answerChosen: regular.answers[0],
+        });
+        assert.equal(correct.type, "lobby_update");
+        assert.equal(correct.data.lobby.wrongAnswerDisabledUntil, acceptedAt + 2000);
+      }
+      for (const elapsed of [0, 1999]) {
+        t.mock.timers.tick(elapsed);
+        const before = (await request("host", "sync_lobby")).data.lobby;
+        const counts = Object.values(events).map((list) => list.length);
+        const rejected = await request("host", "choose_team_answer", { answerChosen: false });
+        assert.equal(rejected.type, "error");
+        assert.match(rejected.message, /Wait two seconds/);
+        assert.deepEqual((await request("host", "sync_lobby")).data.lobby, before);
+        assert.deepEqual(Object.values(events).map((list) => list.length), counts);
+      }
+      t.mock.timers.tick(1);
     }
+    const ended = await request("host", "choose_team_answer", { answerChosen: false });
+    assert.equal(ended.type, "lobby_update");
+    assert.equal(ended.data.lobby.gameState, "round_end");
+    assert.equal(ended.data.lobby.wrongAnswerDisabledUntil, undefined);
+    game.dispose();
+  }
+});
+
+test("manual lightning wrong answers protect the next team with timers enabled or off", async (t) => {
+  t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: 100000 });
+  for (const seconds of [0, 10]) {
+    const { request, events, game } = await setup(t, true, seconds);
+    await request("host", "start_game");
+    await beginRound(request, true);
+    const challenge = (await request("host", "begin_lightning_buzzer")).data.lobby.lightningChallenge;
+    t.mock.timers.tick(6000);
+    const step = challenge.mode === "reaction" ? 0 : Math.floor(
+      (Date.now() - challenge.startedAt) / (challenge.mode === "moles" ? 1100 : 900),
+    );
+    await request("one", "lightning_buzz_in", {
+      challenge: { step, target: challengeTarget(challenge.seed, step) },
+    });
+    const first = await request("host", "choose_lightning_answer", { answerChosen: false });
+    assert.equal(first.type, "lobby_update");
+    assert.equal(first.data.lobby.teams[0].wrongGuesses, 1);
+    assert.equal(first.data.lobby.lightningRoundTeamIndex, 1);
+    assert.equal(first.data.lobby.wrongAnswerDisabledUntil, Date.now() + 2000);
+    if (seconds === 0) assert.equal(first.data.lobby.timerStart, undefined);
+    for (const elapsed of [0, 1999]) {
+      t.mock.timers.tick(elapsed);
+      const counts = Object.values(events).map((list) => list.length);
+      assert.equal((await request("host", "choose_lightning_answer", { answerChosen: false })).type, "error");
+      assert.deepEqual((await request("host", "sync_lobby")).data.lobby, first.data.lobby);
+      assert.deepEqual(Object.values(events).map((list) => list.length), counts);
+    }
+    t.mock.timers.tick(1);
+    const reveal = await request("host", "choose_lightning_answer", { answerChosen: false });
+    assert.equal(reveal.type, "lobby_update");
+    assert.equal(reveal.data.lobby.gameState, "lightning_reveal");
+    assert.equal(reveal.data.lobby.teams[1].wrongGuesses, 1);
+    assert.equal(reveal.data.lobby.wrongAnswerDisabledUntil, undefined);
+    game.dispose();
   }
 });
 
@@ -464,6 +532,12 @@ test("host pause freezes the remaining answer time and resume never resets it", 
   assert.equal(paused.type, "lobby_update");
   assert.equal(paused.data.lobby.timerPausedAt, 113500);
   assert.equal(paused.data.lobby.timerStart, board.timerStart);
+  for (const id of ["host", "one", "two"]) {
+    const broadcast = events[id].at(-1).data.lobby;
+    assert.equal(broadcast.timerPausedAt, paused.data.lobby.timerPausedAt, id);
+    assert.equal(broadcast.revision, board.revision + 1, id);
+    assert.equal(broadcast.timerStart, board.timerStart, id);
+  }
   assert.equal((await request("host", "pause_timer")).type, "error");
   assert.equal((await request("one", "resume_timer")).type, "error");
   assert.equal((await request("stranger", "resume_timer")).type, "error");
@@ -484,6 +558,12 @@ test("host pause freezes the remaining answer time and resume never resets it", 
   assert.equal(resumed.data.lobby.timerPausedAt, undefined);
   assert.equal(resumed.data.lobby.timerStart, board.timerStart + 60000);
   assert.equal(resumed.data.lobby.questionReadUntil, board.questionReadUntil);
+  for (const id of ["host", "one", "two"]) {
+    const broadcast = events[id].at(-1).data.lobby;
+    assert.equal(broadcast.timerPausedAt, undefined, id);
+    assert.equal(broadcast.revision, paused.data.lobby.revision + 1, id);
+    assert.equal(broadcast.timerStart, resumed.data.lobby.timerStart, id);
+  }
   t.mock.timers.tick(6499);
   assert.equal(
     (await request("host", "sync_lobby")).data.lobby.teams[0].wrongGuesses,
@@ -504,6 +584,88 @@ test("host pause freezes the remaining answer time and resume never resets it", 
     (await request("host", "choose_team_answer", { answerChosen: false })).type,
     "lobby_update",
   );
+});
+
+test("only the host can skip active reading; all players get the new deadline and a full answer timer", async (t) => {
+  t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: 100000 });
+  for (const lightningRound of [false, true]) {
+    for (const seconds of [0, 10]) {
+      for (const pauseReading of [false, true]) {
+        const { request, events, game } = await setup(t, lightningRound, seconds);
+        assert.equal((await request("host", "skip_reading")).type, "error");
+        await request("host", "start_game");
+        const board = await beginRound(request, lightningRound, false);
+        t.mock.timers.tick(3000);
+        let pausedAt: number | undefined;
+        if (pauseReading) {
+          pausedAt = (await request("host", "pause_timer")).data.lobby.timerPausedAt;
+          t.mock.timers.tick(30000);
+        }
+        for (const id of ["one", "two", "stranger"])
+          assert.equal((await request(id, "skip_reading")).type, "error", id);
+        const before = (await request("host", "sync_lobby")).data.lobby;
+        const counts = Object.fromEntries(Object.entries(events).map(([id, list]) => [id, list.length]));
+        const skipped = await request("host", "skip_reading", {
+          timerStart: 0,
+          questionReadUntil: Date.now() + 100000,
+        });
+        assert.equal(skipped.type, "lobby_update");
+        const lobby = skipped.data.lobby;
+        const answering = !lightningRound && seconds > 0;
+        assert.equal(lobby.questionReadUntil, undefined);
+        assert.equal(lobby.timerStart, answering ? pausedAt ?? Date.now() : undefined);
+        assert.equal(lobby.timerPausedAt, answering ? pausedAt : undefined);
+        assert.equal(lobby.revision, before.revision + 1);
+        assert.equal((await request("host", "skip_reading")).type, "error");
+        for (const id of ["host", "one", "two"]) {
+          const broadcast = events[id].at(-1).data.lobby;
+          assert.equal(events[id].length, counts[id] + 1, id);
+          assert.equal(broadcast.questionReadUntil, undefined, id);
+          assert.equal(broadcast.timerStart, lobby.timerStart, id);
+          assert.equal(broadcast.timerPausedAt, lobby.timerPausedAt, id);
+          assert.equal(broadcast.revision, lobby.revision, id);
+        }
+        assert.equal(events.stranger.length, counts.stranger);
+
+        if (answering) {
+          if (pauseReading) {
+            t.mock.timers.tick(30000);
+            assert.deepEqual((await request("host", "sync_lobby")).data.lobby, lobby);
+            assert.equal((await request("host", "choose_team_answer", { answerChosen: false })).type, "error");
+            const resumed = (await request("host", "resume_timer")).data.lobby;
+            assert.equal(resumed.timerStart, Date.now());
+            assert.equal(resumed.questionReadUntil, undefined);
+          } else {
+            assert.ok(lobby.timerStart < board.timerStart, "skipping moves the answer deadline earlier");
+          }
+          t.mock.timers.tick(9999);
+          assert.equal((await request("host", "sync_lobby")).data.lobby.teams[0].wrongGuesses, 0);
+          t.mock.timers.tick(1);
+          assert.equal((await request("host", "sync_lobby")).data.lobby.teams[0].wrongGuesses, 1);
+          t.mock.timers.tick(7000);
+          assert.equal((await request("host", "sync_lobby")).data.lobby.teams[0].wrongGuesses, 1, "the original reading deadline must not leave a duplicate timeout");
+        } else if (lightningRound) {
+          assert.equal((await request("host", "begin_lightning_buzzer")).type, "lobby_update");
+        } else {
+          assert.equal((await request("host", "choose_team_answer", { answerChosen: regular.answers[0] })).type, "lobby_update");
+        }
+        game.dispose();
+      }
+    }
+  }
+});
+
+test("skipping completed reading is rejected without resetting the running answer timer", async (t) => {
+  t.mock.timers.enable({ apis: ["Date", "setTimeout"], now: 100000 });
+  const { request, events } = await setup(t, false, 10);
+  await request("host", "start_game");
+  const board = await beginRound(request);
+  const count = events.host.length;
+  assert.equal((await request("host", "skip_reading")).type, "error");
+  assert.deepEqual((await request("host", "sync_lobby")).data.lobby, board);
+  assert.equal(events.host.length, count);
+  t.mock.timers.tick(10000);
+  assert.equal((await request("host", "sync_lobby")).data.lobby.teams[0].wrongGuesses, 1);
 });
 
 test("reading can be paused with answer timers enabled or off and resumes with the same reading time", async (t) => {
@@ -660,6 +822,7 @@ test("all lightning modes enforce launch delay and server-selected target; all i
       "lobby_update",
     );
     await request("host", "choose_lightning_answer", { answerChosen: false });
+    t.mock.timers.tick(2000);
     const reveal = await request("host", "choose_lightning_answer", {
       answerChosen: false,
     });

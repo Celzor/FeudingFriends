@@ -8,6 +8,8 @@ Run `npm run test:pages` from the repository root to build the production Refrac
 
 The relay checks the integration contract locally. A real call in the deployed Refract application remains a manual deployment check.
 
+The timer regressions run with a host and two players in standalone and Refract. They check immediate reading/answer pause and resume updates, two-second cooldowns after automatic and manual wrong answers (including timer-off and lightning games), and host-only reading skips while running or paused. Players must follow the host's acknowledged timer transition within one second. Refract's periodic player sync is suppressed after joining so it cannot mask a missing action broadcast. Reading controls are also checked at 320px, with 44px touch targets and no countdown overlap.
+
 The referee's isolated permission, timer and scoring tests run with `npm test` from the root.
 
 The multiplayer flow also checks the two-column desktop board and stacked boards at 760px and 390px, countdown containment, and page overflow. It checks actual decoded audio readiness, sound/answer-animation timing, original victory-music playback and stop, and celebration overlays. Desktop/mobile round and finale screenshots are saved in `client/output/`.

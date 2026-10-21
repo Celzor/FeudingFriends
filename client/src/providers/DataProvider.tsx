@@ -46,15 +46,27 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
         lobbyData.timerStart + lobbyData.config.timerSeconds * 1000 - refereeNow))
     : null;
   const answerControlsDisabled = isQuestionReading || isTimerPaused;
+  const wrongAnswerCoolingDown =
+    (lobbyData?.wrongAnswerDisabledUntil || 0) > Date.now() + timeOffset;
   // Lock at local zero too, while the referee's timeout update is in flight.
   const wrongAnswerDisabled = answerControlsDisabled || roundSecondsLeft === 0 ||
-    (lobbyData?.wrongAnswerDisabledUntil || 0) > Date.now() + timeOffset;
+    wrongAnswerCoolingDown;
   const accept = (response: any) => {
     if (response?.type === "error")
       throw new Error(
         response.message || "That action could not be completed.",
       );
-    if (response?.data?.lobby) setLobbyData(response.data.lobby);
+    const incoming = response?.data?.lobby as ILobbyData | undefined;
+    if (incoming) {
+      const current = latestLobby.current;
+      // A delayed acknowledgement must not undo a newer pause/resume broadcast.
+      if (current && current.lobbyCode === incoming.lobbyCode &&
+        current.hostSocketId === incoming.hostSocketId &&
+        incoming.revision < current.revision) return response;
+      // Receive order matters even when React batches several updates together.
+      latestLobby.current = incoming;
+      setLobbyData(incoming);
+    }
     return response;
   };
   async function request(type: string, data: Record<string, unknown> = {}) {
@@ -123,7 +135,10 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
   useEffect(() => {
-    if (!timerState || isTimerPaused || (!isQuestionReading && !answerTimerRunning)) return;
+    // Cooldowns use wall time and must expire even with the answer clock off
+    // or paused. Refresh until either kind of deadline is no longer active.
+    const countdownRunning = !isTimerPaused && (isQuestionReading || answerTimerRunning);
+    if (!timerState || (!countdownRunning && !wrongAnswerCoolingDown)) return;
     const interval = setInterval(() => refreshClock((tick) => tick + 1), 100);
     return () => clearInterval(interval);
   }, [
@@ -131,6 +146,7 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
     isTimerPaused,
     isQuestionReading,
     answerTimerRunning,
+    wrongAnswerCoolingDown,
   ]);
 
   const setPlayerName = async (name: string) => {
@@ -216,6 +232,7 @@ const DataContextProvider = ({ children }: { children: React.ReactNode }) => {
         returnToLobby: () => action("return_to_lobby"),
         pauseTimer: () => action("pause_timer"),
         resumeTimer: () => action("resume_timer"),
+        skipReading: () => action("skip_reading"),
         answerQuestion: (answerChosen: IAnswerType | false) =>
           action("choose_team_answer", { answerChosen }),
         answerLightningQuestion: (answerChosen: IAnswerType | false) =>
@@ -270,6 +287,7 @@ type ContextValue = {
   returnToLobby: () => Promise<void>;
   pauseTimer: () => Promise<void>;
   resumeTimer: () => Promise<void>;
+  skipReading: () => Promise<void>;
   answerQuestion: (answer: IAnswerType | false) => Promise<void>;
   answerLightningQuestion: (answer: IAnswerType | false) => Promise<void>;
 };
